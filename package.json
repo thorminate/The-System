@@ -1,9 +1,9 @@
 {
   "name": "the_system",
   "version": "0.0.1",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "tsc && node dist/src/index.js"
+    "start": "tsc && node dist/index.js"
   },
   "keywords": [],
   "author": "Thorminate",

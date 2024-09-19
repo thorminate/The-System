@@ -25,7 +25,7 @@ const statusEffectData = new Schema({
   },
   statusEffectUsers: {
     // Define the status effect users.
-    type: Array,
+    type: Array<string>,
     default: [],
   },
 });

@@ -3,7 +3,7 @@
 import { ShardingManager } from "discord.js"; // First, we import the ShardingManager.
 import * as ReadLine from "node:readline"; // Then we import the readline module, this is used later for the CLI.
 
-const manager = new ShardingManager("./dist/src/bot.js", {
+const manager = new ShardingManager("./dist/bot.js", {
   // Then we create the ShardingManager with the bot entrypoint.
   token: process.env.TOKEN, // We use the token from the environment variables.
   respawn: true, // We make sure the bot will respawn if it crashes.

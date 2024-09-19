@@ -73,7 +73,7 @@ module.exports = async (bot: Client, message: Message) => {
       if (message.member.roles.cache.has("1270791621289578607")) {
         await message.member.roles.remove("1270791621289578607");
         await message.channel.send(
-          `Hello, <@${message.member}> your persona was not saved in the database. Your player role has been removed. Head over to <#1270790941892153404> to set your persona back!`
+          `Hello, <@${message.member.id}> your persona was not saved in the database. Your player role has been removed. Head over to <#1270790941892153404> to set your persona back!`
         );
       }
       // save new userData(aka level)

@@ -678,16 +678,15 @@ module.exports = async (bot, modalInteraction) => {
                     });
                     return;
                 }
-                grantStatusEffectTargetData.statusEffects.push(grantStatusEffectData.statusEffectName);
+                grantStatusEffectTargetData.statusEffects.push({
+                    statusEffectName: grantStatusEffectData.statusEffectName,
+                    statusEffectTimestamp: Date.now(),
+                });
                 await grantStatusEffectTargetData.save();
                 await modalInteraction.reply({
                     content: `Successfully granted status effect ${grantStatusEffectName} to ${grantStatusEffectTarget}.`,
                     ephemeral: true,
                 });
-                setTimeout(async () => {
-                    grantStatusEffectTargetData.statusEffects =
-                        grantStatusEffectTargetData.statusEffects.filter((effect) => effect !== grantStatusEffectData.statusEffectName);
-                }, grantStatusEffectData.statusEffectDuration);
                 break;
             // Bot Perform Modals
             case "send-message-modal":

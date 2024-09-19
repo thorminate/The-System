@@ -27,7 +27,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // This essentially divides the bot into multiple shards for more efficiency.
 const discord_js_1 = require("discord.js"); // First, we import the ShardingManager.
 const ReadLine = __importStar(require("node:readline")); // Then we import the readline module, this is used later for the CLI.
-const manager = new discord_js_1.ShardingManager("./dist/src/bot.js", {
+const manager = new discord_js_1.ShardingManager("./dist/bot.js", {
     // Then we create the ShardingManager with the bot entrypoint.
     token: process.env.TOKEN, // We use the token from the environment variables.
     respawn: true, // We make sure the bot will respawn if it crashes.

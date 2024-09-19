@@ -41,12 +41,12 @@ const userData = new mongoose_1.Schema({
     },
     skills: {
         // Define the skills.
-        type: Array,
+        type: (Array),
         default: [],
     },
     inventory: {
         // Define the inventory.
-        type: Array,
+        type: (Array),
         default: [],
     },
     species: {
@@ -81,7 +81,7 @@ const userData = new mongoose_1.Schema({
     },
     statusEffects: {
         // Define the status effects.
-        type: Array,
+        type: (Array),
         default: [],
     },
 });

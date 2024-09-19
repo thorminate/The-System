@@ -31,7 +31,7 @@ const skillData = new mongoose_1.Schema({
     },
     skillUsers: {
         // Define the skill users.
-        type: Array,
+        type: (Array),
         default: [],
     },
 });

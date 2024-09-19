@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const config_json_1 = require("../../../config.json");
 const areCommandsDifferent_1 = __importDefault(require("../../utils/areCommandsDifferent"));
 const getApplicationCommands_1 = __importDefault(require("../../utils/getApplicationCommands"));
 const getLocalCommands_1 = __importDefault(require("../../utils/getLocalCommands"));
@@ -11,7 +10,7 @@ module.exports = async (bot) => {
     try {
         // Define local commands and application commands
         const localCommands = await (0, getLocalCommands_1.default)();
-        const applicationCommands = await (0, getApplicationCommands_1.default)(bot, config_json_1.primaryServer);
+        const applicationCommands = await (0, getApplicationCommands_1.default)(bot, "1267928656877977670");
         // loop through all local commands
         for (const localCommand of localCommands) {
             const { name, description, options } = localCommand;

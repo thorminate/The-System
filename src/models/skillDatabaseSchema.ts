@@ -30,7 +30,7 @@ const skillData = new Schema({
   },
   skillUsers: {
     // Define the skill users.
-    type: Array,
+    type: Array<string>,
     default: [],
   },
 });

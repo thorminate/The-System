@@ -26,7 +26,7 @@ const statusEffectData = new mongoose_1.Schema({
     },
     statusEffectUsers: {
         // Define the status effect users.
-        type: Array,
+        type: (Array),
         default: [],
     },
 });

@@ -25,7 +25,7 @@ const itemData = new Schema({
   },
   itemUsers: {
     // Define the item users.
-    type: Array,
+    type: Array<string>,
     default: [],
   },
 });

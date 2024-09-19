@@ -3,13 +3,8 @@
  * @param {Client} bot The instantiating client.
  * @param {Interaction} interaction The interaction that ran the command.
  */
-import { devs, primaryServer } from "../../../config.json";
 import getLocalCommands from "../../utils/getLocalCommands";
-import type {
-  Client,
-  CommandInteraction,
-  PermissionsBitField,
-} from "discord.js";
+import { Client, CommandInteraction, PermissionsBitField } from "discord.js";
 
 module.exports = async (
   bot: Client,
@@ -29,10 +24,11 @@ module.exports = async (
     if (!commandObject) return;
 
     // if command is devOnly and user is not an admin, return
-    if (commandObject.devOnly) {
+    if (commandObject.adminOnly) {
       if (
-        "id" in commandInteraction.member &&
-        !devs.includes(commandInteraction.member.id)
+        !(commandInteraction.member.permissions as PermissionsBitField).has(
+          PermissionsBitField.Flags.Administrator
+        )
       ) {
         commandInteraction.reply({
           content: "Only administrators can run this command",
@@ -42,8 +38,8 @@ module.exports = async (
       }
     }
 
-    // if command is testOnly and user is not in primaryServer, return
-    if (!(commandInteraction.guild.id === primaryServer)) {
+    // if where the command is called was not in the main server, return
+    if (!(commandInteraction.guild.id === "1267928656877977670")) {
       commandInteraction.reply({
         content: "Nuh uh, wrong server.",
         ephemeral: true,

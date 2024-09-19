@@ -26,7 +26,7 @@ const itemData = new mongoose_1.Schema({
     },
     itemUsers: {
         // Define the item users.
-        type: Array,
+        type: (Array),
         default: [],
     },
 });

@@ -1,6 +1,5 @@
 // Register, edit and delete commands
 import { Client } from "discord.js";
-import { primaryServer } from "../../../config.json";
 import areCommandsDifferent from "../../utils/areCommandsDifferent";
 import getApplicationCommands from "../../utils/getApplicationCommands";
 import getLocalCommands from "../../utils/getLocalCommands";
@@ -11,7 +10,7 @@ module.exports = async (bot: Client) => {
     const localCommands = await getLocalCommands();
     const applicationCommands = await getApplicationCommands(
       bot,
-      primaryServer
+      "1267928656877977670"
     );
 
     // loop through all local commands

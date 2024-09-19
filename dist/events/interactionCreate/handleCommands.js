@@ -8,8 +8,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @param {Client} bot The instantiating client.
  * @param {Interaction} interaction The interaction that ran the command.
  */
-const config_json_1 = require("../../../config.json");
 const getLocalCommands_1 = __importDefault(require("../../utils/getLocalCommands"));
+const discord_js_1 = require("discord.js");
 module.exports = async (bot, commandInteraction) => {
     if (!commandInteraction.isChatInputCommand())
         return;
@@ -22,9 +22,8 @@ module.exports = async (bot, commandInteraction) => {
         if (!commandObject)
             return;
         // if command is devOnly and user is not an admin, return
-        if (commandObject.devOnly) {
-            if ("id" in commandInteraction.member &&
-                !config_json_1.devs.includes(commandInteraction.member.id)) {
+        if (commandObject.adminOnly) {
+            if (!commandInteraction.member.permissions.has(discord_js_1.PermissionsBitField.Flags.Administrator)) {
                 commandInteraction.reply({
                     content: "Only administrators can run this command",
                     ephemeral: true,
@@ -32,8 +31,8 @@ module.exports = async (bot, commandInteraction) => {
                 return;
             }
         }
-        // if command is testOnly and user is not in primaryServer, return
-        if (!(commandInteraction.guild.id === config_json_1.primaryServer)) {
+        // if where the command is called was not in the main server, return
+        if (!(commandInteraction.guild.id === "1267928656877977670")) {
             commandInteraction.reply({
                 content: "Nuh uh, wrong server.",
                 ephemeral: true,

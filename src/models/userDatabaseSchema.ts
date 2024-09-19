@@ -40,12 +40,12 @@ const userData = new Schema({
   },
   skills: {
     // Define the skills.
-    type: Array,
+    type: Array<string>,
     default: [],
   },
   inventory: {
     // Define the inventory.
-    type: Array,
+    type: Array<object>,
     default: [],
   },
   species: {
@@ -80,7 +80,7 @@ const userData = new Schema({
   },
   statusEffects: {
     // Define the status effects.
-    type: Array,
+    type: Array<object>,
     default: [],
   },
 });
