@@ -44,7 +44,7 @@ const rl = ReadLine.createInterface({
 rl.setPrompt("> "); // Set the prompt.
 setTimeout(() => {
   rl.prompt(); // Give the prompt.
-}, 100); // Give the prompt.
+}, 2500); // Give the prompt.
 
 rl.on("line", async (input: string) => {
   // When a line is typed.

@@ -9,6 +9,11 @@ const environmentData = new mongoose_1.Schema({
         type: String,
         required: true,
     },
+    environmentChannel: {
+        // Define the environment channel.
+        type: String,
+        required: true,
+    },
     environmentItems: {
         // Define the environment items.
         type: (Array),
@@ -20,3 +25,4 @@ const environmentData = new mongoose_1.Schema({
         default: [],
     },
 });
+exports.default = (0, mongoose_1.model)("environmentDatabase", environmentData); // Export the model.

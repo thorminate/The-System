@@ -29,5 +29,10 @@ const itemData = new mongoose_1.Schema({
         type: (Array),
         default: [],
     },
+    itemEnvironments: {
+        // Define the item environments.
+        type: (Array),
+        default: [],
+    },
 });
 exports.default = (0, mongoose_1.model)("itemData", itemData); // Export the model.

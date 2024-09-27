@@ -15,6 +15,7 @@ import {
   TextInputStyle,
   ModalBuilder,
   EmbedBuilder,
+  HTTPError,
 } from "discord.js";
 import userData from "../../models/userDatabaseSchema";
 import calculateLevelExp from "../../utils/calculateLevelExp";
@@ -564,7 +565,6 @@ module.exports = {
 
                 // Edit the original reply to disable the button
                 await interaction.editReply({
-                  content: `loading...`,
                   components: modifySkillsUpdatedComponents,
                 });
                 // Define buttons for submenu
@@ -639,7 +639,6 @@ module.exports = {
 
                 // Edit the original reply to disable the button
                 await interaction.editReply({
-                  content: `loading...`,
                   components: modifyItemsUpdatedComponents,
                 });
                 // Define buttons for submenu
@@ -712,7 +711,6 @@ module.exports = {
 
                 // Edit the original reply to disable the button
                 await interaction.editReply({
-                  content: `loading...`,
                   components: modifyStatusEffectsUpdatedComponents,
                 });
                 // Define buttons for submenu
@@ -1357,6 +1355,13 @@ module.exports = {
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true);
 
+                  const createEnvironmentChannelInput = new TextInputBuilder()
+                    .setCustomId("create-environment-channel-input")
+                    .setLabel("Environment channel ID")
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setMinLength(18);
+
                   const createEnvironmentNameRow =
                     new ActionRowBuilder<TextInputBuilder>().addComponents(
                       createEnvironmentNameInput
@@ -1366,9 +1371,15 @@ module.exports = {
                       createEnvironmentItemsInput
                     );
 
+                  const createEnvironmentChannelRow =
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      createEnvironmentChannelInput
+                    );
+
                   createEnvironmentModal.addComponents(
                     createEnvironmentNameRow,
-                    createEnvironmentItemsRow
+                    createEnvironmentItemsRow,
+                    createEnvironmentChannelRow
                   );
 
                   // Show the modal
@@ -1382,30 +1393,55 @@ module.exports = {
                 break;
 
               case "edit_environment":
-                // Handle "Edit Environment" button click
-                try {
-                  // Set up the Edit Environment modal
-                  const editEnvironmentModal = new ModalBuilder()
-                    .setCustomId("edit-environment-modal")
-                    .setTitle("Edit Environment");
-
-                  const editEnvironmentNameInput = new TextInputBuilder()
-                    .setCustomId("edit-environment-name-input")
-                    .setLabel("Environment name")
-                    .setStyle(TextInputStyle.Short)
-                    .setRequired(true);
-
-                  const editEnvironmentNameRow =
-                    new ActionRowBuilder<TextInputBuilder>().addComponents(
-                      editEnvironmentNameInput
+                // Create the Edit Environment submenu
+                const editEnvironmentUpdatedComponents =
+                  adminReply.components.map((row: any) => {
+                    return ActionRowBuilder.from<ButtonBuilder>(
+                      row
+                    ).setComponents(
+                      row.components.map((button: any) => {
+                        return button;
+                      })
                     );
+                  });
 
-                  editEnvironmentModal.addComponents(editEnvironmentNameRow);
+                await interaction.editReply({
+                  components: editEnvironmentUpdatedComponents,
+                });
 
-                  // Show the modal
-                  await buttonInteraction.showModal(editEnvironmentModal);
-                } catch (error) {
-                  console.log("Error handling Edit Environment modal:", error);
+                // create buttons for submenu
+
+                const editEnvironmentButtons = [
+                  new ButtonBuilder()
+                    .setCustomId("edit-environment-name")
+                    .setLabel("Edit Environment Name")
+                    .setStyle(ButtonStyle.Primary),
+                  new ButtonBuilder()
+                    .setCustomId("edit-environment-items")
+                    .setLabel("Edit Environment Items")
+                    .setStyle(ButtonStyle.Primary),
+                  new ButtonBuilder()
+                    .setCustomId("edit-environment-channel")
+                    .setLabel("Edit Environment Channel")
+                    .setStyle(ButtonStyle.Primary),
+                ];
+
+                if (prevPlayer === true) {
+                  await buttonInteraction.editReply({
+                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                      0,
+                      1
+                    )}?`,
+                    components: buttonWrapper(editEnvironmentButtons),
+                  });
+                } else {
+                  await buttonInteraction.update({
+                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                      0,
+                      1
+                    )}?`,
+                    components: buttonWrapper(editEnvironmentButtons),
+                  });
                 }
                 break;
 
@@ -1437,6 +1473,149 @@ module.exports = {
                 } catch (error) {
                   console.log(
                     "Error handling Delete Environment modal:",
+                    error
+                  );
+                }
+                break;
+
+              // Edit Environment Buttons
+              case "edit-environment-name":
+                try {
+                  // Set up the Edit Environment Name modal
+                  const editEnvironmentNameModal = new ModalBuilder()
+                    .setCustomId("edit-environment-name-modal")
+                    .setTitle("Edit Environment Name");
+
+                  const editEnvironmentNameInput = new TextInputBuilder()
+                    .setCustomId("edit-environment-name-input")
+                    .setLabel("Environment name")
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
+
+                  const editEnvironmentNewNameInput = new TextInputBuilder()
+                    .setCustomId("edit-environment-new-name-input")
+                    .setLabel("New environment name")
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
+
+                  const editEnvironmentNameRow =
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      editEnvironmentNameInput
+                    );
+                  const editEnvironmentNewNameRow =
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      editEnvironmentNewNameInput
+                    );
+
+                  editEnvironmentNameModal.addComponents(
+                    editEnvironmentNameRow,
+                    editEnvironmentNewNameRow
+                  );
+
+                  // Show the modal
+                  await buttonInteraction.showModal(editEnvironmentNameModal);
+                } catch (error) {
+                  console.log(
+                    "Error handling Edit Environment Name modal:",
+                    error
+                  );
+                }
+                break;
+
+              case "edit-environment-items":
+                try {
+                  // Set up the Edit Environment Items modal
+                  const editEnvironmentItemsModal = new ModalBuilder()
+                    .setCustomId("edit-environment-items-modal")
+                    .setTitle("Edit Environment Items");
+
+                  const editEnvironmentItemsNameInput = new TextInputBuilder()
+                    .setCustomId("edit-environment-name-input")
+                    .setLabel("Environment name")
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
+
+                  const editEnvironmentNameOperatorInput =
+                    new TextInputBuilder()
+                      .setCustomId("edit-environment-items-operator-input")
+                      .setLabel("Add, set, or remove")
+                      .setStyle(TextInputStyle.Short)
+                      .setRequired(true);
+
+                  const editEnvironmentItemsInput = new TextInputBuilder()
+                    .setCustomId("edit-environment-items-input")
+                    .setLabel("Environment items")
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
+
+                  const editEnvironmentItemsNameRow =
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      editEnvironmentItemsNameInput
+                    );
+                  const editEnvironmentItemsOperationRow =
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      editEnvironmentNameOperatorInput
+                    );
+                  const editEnvironmentItemsRow =
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      editEnvironmentItemsInput
+                    );
+
+                  editEnvironmentItemsModal.addComponents(
+                    editEnvironmentItemsNameRow,
+                    editEnvironmentItemsOperationRow,
+                    editEnvironmentItemsRow
+                  );
+
+                  // Show the modal
+                  await buttonInteraction.showModal(editEnvironmentItemsModal);
+                } catch (error) {
+                  console.log(
+                    "Error handling Edit Environment Items modal:",
+                    error
+                  );
+                }
+                break;
+
+              case "edit-environment-channel":
+                try {
+                  const editEnvironmentChannelModal = new ModalBuilder()
+                    .setCustomId("edit-environment-channel-modal")
+                    .setTitle("Edit Environment Channel");
+
+                  const editEnvironmentNameInput = new TextInputBuilder()
+                    .setCustomId("edit-environment-name-input")
+                    .setLabel("Environment name")
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
+
+                  const editEnvironmentChannelInput = new TextInputBuilder()
+                    .setCustomId("edit-environment-channel-input")
+                    .setLabel("Environment channel")
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true);
+
+                  const editEnvironmentNameRow =
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      editEnvironmentNameInput
+                    );
+                  const editEnvironmentChannelRow =
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      editEnvironmentChannelInput
+                    );
+
+                  editEnvironmentChannelModal.addComponents(
+                    editEnvironmentNameRow,
+                    editEnvironmentChannelRow
+                  );
+
+                  // Show the modal
+                  await buttonInteraction.showModal(
+                    editEnvironmentChannelModal
+                  );
+                } catch (error) {
+                  console.log(
+                    "Error handling Edit Environment Channel modal:",
                     error
                   );
                 }
@@ -1635,6 +1814,11 @@ module.exports = {
           playerMenu();
         }
     } catch (error) {
+      if (error instanceof HTTPError && error.status === 503) {
+        console.log(
+          `There was an error running status: The API did not respond in time. ${error.status}`
+        );
+      }
       console.log(`There was an error running status: ${error}`);
     }
   },

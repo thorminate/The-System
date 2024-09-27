@@ -14,6 +14,7 @@ module.exports = async (bot, buttonInteraction) => {
     if (!buttonInteraction.isButton())
         return;
     switch (buttonInteraction.customId) {
+        // Onboarding buttons
         case "begin-onboarding":
             let user = await userDatabaseSchema_1.default.findOne({
                 userId: buttonInteraction.user.id,
@@ -113,6 +114,74 @@ module.exports = async (bot, buttonInteraction) => {
                 components: [speciesRow],
                 ephemeral: true,
             });
+            break;
+        // Edit environment modals
+        case "edit-environment-items-button":
+            try {
+                const editEnvironmentItemsModal = new discord_js_1.ModalBuilder()
+                    .setCustomId("edit-environment-items-modal")
+                    .setTitle("Edit Environment Items");
+                const editEnvironmentItemsOperatorInput = new discord_js_1.TextInputBuilder()
+                    .setCustomId("edit-environment-items-operator-input")
+                    .setLabel("Remove or Add")
+                    .setRequired(true)
+                    .setStyle(discord_js_1.TextInputStyle.Short);
+                const editEnvironmentItemsValueInput = new discord_js_1.TextInputBuilder()
+                    .setCustomId("edit-environment-items-value-input")
+                    .setLabel("Item name")
+                    .setRequired(true)
+                    .setStyle(discord_js_1.TextInputStyle.Short);
+                const editEnvironmentItemsOperatorRow = new discord_js_1.ActionRowBuilder().addComponents(editEnvironmentItemsOperatorInput);
+                const editEnvironmentItemsValueRow = new discord_js_1.ActionRowBuilder().addComponents(editEnvironmentItemsValueInput);
+                editEnvironmentItemsModal.addComponents(editEnvironmentItemsOperatorRow, editEnvironmentItemsValueRow);
+                await buttonInteraction.showModal(editEnvironmentItemsModal);
+            }
+            catch (error) {
+                console.error(error);
+            }
+            break;
+        case "edit-environment-users-button":
+            try {
+                const editEnvironmentUsersModal = new discord_js_1.ModalBuilder()
+                    .setCustomId("edit-environment-users-modal")
+                    .setTitle("Edit Environment Users");
+                const editEnvironmentUsersOperatorInput = new discord_js_1.TextInputBuilder()
+                    .setCustomId("edit-environment-users-operator-input")
+                    .setLabel("Operator")
+                    .setRequired(true)
+                    .setStyle(discord_js_1.TextInputStyle.Short);
+                const editEnvironmentUsersInput = new discord_js_1.TextInputBuilder()
+                    .setCustomId("edit-environment-users-input")
+                    .setLabel("User ID")
+                    .setRequired(true)
+                    .setStyle(discord_js_1.TextInputStyle.Short);
+                const editEnvironmentUsersOperatorRow = new discord_js_1.ActionRowBuilder().addComponents(editEnvironmentUsersOperatorInput);
+                const editEnvironmentUsersInputRow = new discord_js_1.ActionRowBuilder().addComponents(editEnvironmentUsersInput);
+                editEnvironmentUsersModal.addComponents(editEnvironmentUsersOperatorRow, editEnvironmentUsersInputRow);
+                await buttonInteraction.showModal(editEnvironmentUsersModal);
+            }
+            catch (error) {
+                console.log(error);
+            }
+            break;
+        case "edit-environment-channels-button":
+            try {
+                const editEnvironmentChannelsModal = new discord_js_1.ModalBuilder()
+                    .setCustomId("edit-environment-channels-modal")
+                    .setTitle("Edit Environment Channels");
+                const editEnvironmentChannelsValueInput = new discord_js_1.TextInputBuilder()
+                    .setCustomId("edit-environment-channels-value-input")
+                    .setLabel("Value")
+                    .setRequired(true)
+                    .setStyle(discord_js_1.TextInputStyle.Short)
+                    .setMinLength(18);
+                const editEnvironmentChannelsValueRow = new discord_js_1.ActionRowBuilder().addComponents(editEnvironmentChannelsValueInput);
+                editEnvironmentChannelsModal.addComponents(editEnvironmentChannelsValueRow);
+                await buttonInteraction.showModal(editEnvironmentChannelsModal);
+            }
+            catch (error) {
+                console.log(error);
+            }
             break;
     }
 };

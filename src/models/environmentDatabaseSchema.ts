@@ -8,6 +8,11 @@ const environmentData = new Schema({
     type: String,
     required: true,
   },
+  environmentChannel: {
+    // Define the environment channel.
+    type: String,
+    required: true,
+  },
   environmentItems: {
     // Define the environment items.
     type: Array<object>,
@@ -19,3 +24,5 @@ const environmentData = new Schema({
     default: [],
   },
 });
+
+export default model("environmentDatabase", environmentData); // Export the model.

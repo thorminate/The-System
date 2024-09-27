@@ -15,12 +15,16 @@ import {
   GuildMemberRoleManager,
   TextChannel,
   GuildChannelManager,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
 } from "discord.js"; // Import the discord.js library.
 import userData from "../../models/userDatabaseSchema"; // Import the user database schema.
 
 module.exports = async (bot: Client, buttonInteraction: ButtonInteraction) => {
   if (!buttonInteraction.isButton()) return;
   switch (buttonInteraction.customId) {
+    // Onboarding buttons
     case "begin-onboarding":
       let user = await userData.findOne({
         userId: buttonInteraction.user.id,
@@ -162,6 +166,113 @@ module.exports = async (bot: Client, buttonInteraction: ButtonInteraction) => {
         components: [speciesRow],
         ephemeral: true,
       });
+      break;
+
+    // Edit environment modals
+    case "edit-environment-items-button":
+      try {
+        const editEnvironmentItemsModal = new ModalBuilder()
+          .setCustomId("edit-environment-items-modal")
+          .setTitle("Edit Environment Items");
+
+        const editEnvironmentItemsOperatorInput = new TextInputBuilder()
+          .setCustomId("edit-environment-items-operator-input")
+          .setLabel("Remove or Add")
+          .setRequired(true)
+          .setStyle(TextInputStyle.Short);
+
+        const editEnvironmentItemsValueInput = new TextInputBuilder()
+          .setCustomId("edit-environment-items-value-input")
+          .setLabel("Item name")
+          .setRequired(true)
+          .setStyle(TextInputStyle.Short);
+
+        const editEnvironmentItemsOperatorRow =
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            editEnvironmentItemsOperatorInput
+          );
+
+        const editEnvironmentItemsValueRow =
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            editEnvironmentItemsValueInput
+          );
+
+        editEnvironmentItemsModal.addComponents(
+          editEnvironmentItemsOperatorRow,
+          editEnvironmentItemsValueRow
+        );
+
+        await buttonInteraction.showModal(editEnvironmentItemsModal);
+      } catch (error) {
+        console.error(error);
+      }
+      break;
+
+    case "edit-environment-users-button":
+      try {
+        const editEnvironmentUsersModal = new ModalBuilder()
+          .setCustomId("edit-environment-users-modal")
+          .setTitle("Edit Environment Users");
+
+        const editEnvironmentUsersOperatorInput = new TextInputBuilder()
+          .setCustomId("edit-environment-users-operator-input")
+          .setLabel("Operator")
+          .setRequired(true)
+          .setStyle(TextInputStyle.Short);
+
+        const editEnvironmentUsersInput = new TextInputBuilder()
+          .setCustomId("edit-environment-users-input")
+          .setLabel("User ID")
+          .setRequired(true)
+          .setStyle(TextInputStyle.Short);
+
+        const editEnvironmentUsersOperatorRow =
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            editEnvironmentUsersOperatorInput
+          );
+
+        const editEnvironmentUsersInputRow =
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            editEnvironmentUsersInput
+          );
+
+        editEnvironmentUsersModal.addComponents(
+          editEnvironmentUsersOperatorRow,
+          editEnvironmentUsersInputRow
+        );
+
+        await buttonInteraction.showModal(editEnvironmentUsersModal);
+      } catch (error) {
+        console.log(error);
+      }
+      break;
+
+    case "edit-environment-channels-button":
+      try {
+        const editEnvironmentChannelsModal = new ModalBuilder()
+          .setCustomId("edit-environment-channels-modal")
+          .setTitle("Edit Environment Channels");
+
+        const editEnvironmentChannelsValueInput = new TextInputBuilder()
+          .setCustomId("edit-environment-channels-value-input")
+          .setLabel("Value")
+          .setRequired(true)
+          .setStyle(TextInputStyle.Short)
+          .setMinLength(18);
+
+        const editEnvironmentChannelsValueRow =
+          new ActionRowBuilder<TextInputBuilder>().addComponents(
+            editEnvironmentChannelsValueInput
+          );
+
+        editEnvironmentChannelsModal.addComponents(
+          editEnvironmentChannelsValueRow
+        );
+
+        await buttonInteraction.showModal(editEnvironmentChannelsModal);
+      } catch (error) {
+        console.log(error);
+      }
       break;
   }
 };

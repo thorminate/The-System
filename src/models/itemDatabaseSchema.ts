@@ -28,6 +28,11 @@ const itemData = new Schema({
     type: Array<string>,
     default: [],
   },
+  itemEnvironments: {
+    // Define the item environments.
+    type: Array<string>,
+    default: [],
+  },
 });
 
 export default model("itemData", itemData); // Export the model.
