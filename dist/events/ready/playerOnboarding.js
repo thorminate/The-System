@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
-module.exports = async (bot) => {
+exports.default = async (bot) => {
     const welcomeChannel = bot.channels.cache.get("1270790941892153404");
     if (!(welcomeChannel instanceof discord_js_1.TextChannel))
         return;

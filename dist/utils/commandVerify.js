@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = (interaction) => {
     // Export the function.
+    if (!interaction.isChatInputCommand())
+        return false;
     if (!interaction.inGuild()) {
         // if the command is not in a guild
         interaction.reply(

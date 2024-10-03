@@ -10,7 +10,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const userDatabaseSchema_1 = __importDefault(require("../../models/userDatabaseSchema"));
 const discord_js_1 = require("discord.js");
-module.exports = async (bot, interaction) => {
+exports.default = async (bot, interaction) => {
     switch (interaction.customId) {
         case "species-select":
             if (!interaction.isStringSelectMenu())

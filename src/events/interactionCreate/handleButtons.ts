@@ -21,7 +21,7 @@ import {
 } from "discord.js"; // Import the discord.js library.
 import userData from "../../models/userDatabaseSchema"; // Import the user database schema.
 
-module.exports = async (bot: Client, buttonInteraction: ButtonInteraction) => {
+export default async (bot: Client, buttonInteraction: ButtonInteraction) => {
   if (!buttonInteraction.isButton()) return;
   switch (buttonInteraction.customId) {
     // Onboarding buttons
@@ -154,7 +154,7 @@ module.exports = async (bot: Client, buttonInteraction: ButtonInteraction) => {
               "Orcs are known for their brutish strength and resilience."
             )
             .setEmoji("🧟")
-            .setValue("orc")
+            .setValue("Orc")
         );
       const speciesRow =
         new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(

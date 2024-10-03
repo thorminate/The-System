@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const userDatabaseSchema_1 = __importDefault(require("../../models/userDatabaseSchema"));
 const skillDatabaseSchema_1 = __importDefault(require("../../models/skillDatabaseSchema"));
 const itemDatabaseSchema_1 = __importDefault(require("../../models/itemDatabaseSchema"));
-module.exports = async (bot, message) => {
+exports.default = async (bot, message) => {
     // if message was not made in a guild, author was a bot or the cooldown is active, return
     if (!message.inGuild() || message.author.bot)
         return;
@@ -28,24 +28,6 @@ module.exports = async (bot, message) => {
                     user.inventory.splice(itemIndex, 1); // Remove the item from the inventory
                     await user.save();
                 }
-                // the code to execute the item action using correct syntax
-                async function executeItemAction(actionString, userData) {
-                    if (actionString === "none")
-                        return;
-                    const actionParts = actionString.split(",");
-                    const operators = {
-                        "+": (a, b) => a + b,
-                        "-": (a, b) => a - b,
-                    };
-                    for (const action of actionParts) {
-                        const [stat, operator, value] = action.trim().split(" ");
-                        const statName = stat.toLowerCase();
-                        const statValue = parseInt(value);
-                        userData[statName] = operators[operator](userData[statName], statValue);
-                        await userData.save();
-                    }
-                }
-                executeItemAction(itemDataConsume.itemAction, user);
                 await message.reply(`Item ${itemName} consumed.`);
             }
             else {
@@ -64,10 +46,17 @@ module.exports = async (bot, message) => {
                 const skill = await skillDatabaseSchema_1.default.findOne({ skillName: skillName });
                 if (skill) {
                     // Perform the skill action here
+                    if (user.will < skill.skillWill) {
+                        await message.reply({
+                            content: "You don't have enough will to use this skill.",
+                            ephemeral: true,
+                        });
+                        return;
+                    }
                     const skillAction = skill.skillAction;
                     await message.reply(skillAction);
                 }
-                else if (skillName === undefined) {
+                else if (!skillName) {
                     await message.reply({
                         content: "Please specify a skill to use.",
                         ephemeral: true,

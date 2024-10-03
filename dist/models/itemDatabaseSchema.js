@@ -19,11 +19,6 @@ const itemData = new mongoose_1.Schema({
         type: String,
         required: true,
     },
-    itemAction: {
-        // Define the item action.
-        type: String,
-        required: true,
-    },
     itemUsers: {
         // Define the item users.
         type: (Array),

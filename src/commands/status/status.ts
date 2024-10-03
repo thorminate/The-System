@@ -17,7 +17,7 @@ import {
   EmbedBuilder,
   HTTPError,
 } from "discord.js";
-import userData from "../../models/userDatabaseSchema";
+import UserData from "../../models/userDatabaseSchema";
 import calculateLevelExp from "../../utils/calculateLevelExp";
 import buttonWrapper from "../../utils/buttonWrapper";
 import commandVerify from "../../utils/commandVerify";
@@ -26,34 +26,33 @@ module.exports = {
   name: "status",
   description: "Shows your personal menu",
   //devOnly: Boolean,
-  testOnly: true,
+  //testOnly: true,
   //permissionsRequired: [PermissionFlagsBits.Administrator],
   //botPermissions: [PermissionFlagsBits.Administrator],
-  options: [],
+  //options: [],
   //deleted: true,
 
   callback: async (bot: Client, interaction: CommandInteraction) => {
-    commandVerify(interaction);
-
     try {
-      if (!interaction.isCommand()) return;
+      if (!commandVerify(interaction)) return;
+
       // defer reply and make it ephemeral
       await interaction.deferReply({
         ephemeral: true,
       });
 
       //define targetUserObj
-      const targetUserId = (interaction.member as GuildMember).id;
-      const targetUserObj = await interaction.guild.members.fetch(targetUserId);
+      const userId = (interaction.member as GuildMember).id;
+      const userObj = await interaction.guild.members.fetch(userId);
 
       // find user in database and then get their data
-      const targetUserData = await userData.findOne({
-        userId: targetUserId,
+      const userData = await UserData.findOne({
+        userId: userId,
         guildId: interaction.guild.id,
       });
 
       // if user doesn't exist in database, say so and return
-      if (!targetUserData) {
+      if (!userData) {
         interaction.editReply(
           "You haven't been integrated into the system yet. Head over to <#1270790941892153404>"
         );
@@ -61,8 +60,8 @@ module.exports = {
       }
 
       let skillsDisplay: string;
-      if (targetUserData.skills && targetUserData.skills.length > 0) {
-        skillsDisplay = targetUserData.skills
+      if (userData.skills && userData.skills.length > 0) {
+        skillsDisplay = userData.skills
           .map((skill: string) => {
             const skillUppercaseLetter = skill[0].toUpperCase();
             return `${skillUppercaseLetter}${skill.slice(1)}`;
@@ -89,14 +88,14 @@ module.exports = {
             .setDisabled(false);
 
           playerReply = await interaction.editReply({
-            content: `Hello <@${targetUserObj.user.id}>!\nYour level is **${
-              targetUserData.level
-            }** and you have **${targetUserData.exp}/${calculateLevelExp(
-              targetUserData.level + 1
+            content: `Hello <@${userObj.user.id}>!\nYour level is **${
+              userData.level
+            }** and you have **${userData.exp}/${calculateLevelExp(
+              userData.level + 1
             )}** experience.\n# ***Stats:***\n**Strength:** ***${
-              targetUserData.strength
-            }***\n**Will:** ***${targetUserData.will}***\n**Cognition:** ***${
-              targetUserData.cognition
+              userData.strength
+            }***\n**Will:** ***${userData.will}***\n**Cognition:** ***${
+              userData.cognition
             }***\n# ***Skills:***\n${skillsDisplay}`,
             //@ts-ignore
             ephemeral: true,
@@ -104,14 +103,14 @@ module.exports = {
           });
         } else {
           playerReply = await interaction.editReply({
-            content: `Hello <@${targetUserObj.user.id}>!\nYour level is **${
-              targetUserData.level
-            }** and you have **${targetUserData.exp}/${calculateLevelExp(
-              targetUserData.level + 1
+            content: `Hello <@${userObj.user.id}>!\nYour level is **${
+              userData.level
+            }** and you have **${userData.exp}/${calculateLevelExp(
+              userData.level + 1
             )}** experience.\n# ***Stats:***\n**Strength:** ***${
-              targetUserData.strength
-            }***\n**Will:** ***${targetUserData.will}***\n**Cognition:** ***${
-              targetUserData.cognition
+              userData.strength
+            }***\n**Will:** ***${userData.will}***\n**Cognition:** ***${
+              userData.cognition
             }***\n# ***Skills:***\n${skillsDisplay}`,
             //@ts-ignore
             ephemeral: true,
@@ -133,7 +132,7 @@ module.exports = {
           if (i.replied) return;
           if (i.customId === "inventory") {
             const formattedInventory =
-              targetUserData.inventory
+              userData.inventory
                 .map((item) => `${item.itemName}`)
                 .join(",\n") || "is empty...";
             await i.reply({
@@ -184,23 +183,23 @@ module.exports = {
 
         const adminEmbed = new EmbedBuilder()
           .setColor(0x0099ff)
-          .setTitle(`Welcome, ${targetUserObj.user.displayName}!`)
+          .setTitle(`Welcome, ${userObj.user.displayName}!`)
           .setAuthor({
             name: "Administrator Menu",
-            iconURL: targetUserObj.user.avatarURL(),
-            url: `https://discord.com/users/${targetUserObj.user.id}`,
+            iconURL: userObj.user.avatarURL(),
+            url: `https://discord.com/users/${userObj.user.id}`,
           })
           .setDescription(
-            `Welcome Administrator <@${
-              targetUserObj.user.id
-            }>!\nYour level is **${targetUserData.level}** and you have **${
-              targetUserData.exp
-            }/${calculateLevelExp(targetUserData.level + 1)}** experience.\n`
+            `Welcome Administrator <@${userObj.user.id}>!\nYour level is **${
+              userData.level
+            }** and you have **${userData.exp}/${calculateLevelExp(
+              userData.level + 1
+            )}** experience.\n`
           )
           .addFields(
             {
               name: "Stats",
-              value: `**Strength:** ***${targetUserData.strength}***\n**Will:** ***${targetUserData.will}***\n**Cognition:** ***${targetUserData.cognition}***`,
+              value: `**Strength:** ***${userData.strength}***\n**Will:** ***${userData.will}***\n**Cognition:** ***${userData.cognition}***`,
             },
             { name: "Skills", value: skillsDisplay }
           )
@@ -278,10 +277,16 @@ module.exports = {
                   .setCustomId("modify_status_effects")
                   .setDisabled(false);
 
+                const modifyEnvironmentButton = new ButtonBuilder()
+                  .setLabel("Modify Player Location")
+                  .setStyle(ButtonStyle.Secondary)
+                  .setCustomId("modify_environment")
+                  .setDisabled(false);
+
                 const embed = new EmbedBuilder()
                   .setColor(0x0099ff)
                   .setTitle(
-                    `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`
@@ -294,6 +299,7 @@ module.exports = {
                       modifySkillsButton,
                       modifyItemsButton,
                       modifyStatusEffectsButton,
+                      modifyEnvironmentButton,
                     ]),
                   });
                 } else {
@@ -304,6 +310,7 @@ module.exports = {
                       modifySkillsButton,
                       modifyItemsButton,
                       modifyStatusEffectsButton,
+                      modifyEnvironmentButton,
                     ]),
                   });
                 }
@@ -352,7 +359,7 @@ module.exports = {
                 const envEmbed = new EmbedBuilder()
                   .setColor(0x0099ff)
                   .setTitle(
-                    `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`
@@ -418,7 +425,7 @@ module.exports = {
                   .setDisabled(false);
 
                 await buttonInteraction.update({
-                  content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                  content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                     0,
                     1
                   )}?`,
@@ -465,7 +472,7 @@ module.exports = {
 
                 if (prevPlayer === true) {
                   await buttonInteraction.editReply({
-                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`,
@@ -473,7 +480,7 @@ module.exports = {
                   });
                 } else {
                   await buttonInteraction.update({
-                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`,
@@ -595,7 +602,7 @@ module.exports = {
 
                 if (prevPlayer === true) {
                   await buttonInteraction.editReply({
-                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`,
@@ -608,7 +615,7 @@ module.exports = {
                   });
                 } else {
                   await buttonInteraction.update({
-                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`,
@@ -661,14 +668,14 @@ module.exports = {
                   .setDisabled(false);
 
                 const removeItemButton = new ButtonBuilder()
-                  .setLabel("Remove Item")
+                  .setLabel("Revoke Item")
                   .setStyle(ButtonStyle.Danger)
-                  .setCustomId("remove_item")
+                  .setCustomId("revoke_item")
                   .setDisabled(false);
 
                 if (prevPlayer === true) {
                   await buttonInteraction.editReply({
-                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`,
@@ -681,7 +688,7 @@ module.exports = {
                   });
                 } else {
                   await buttonInteraction.update({
-                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`,
@@ -740,7 +747,7 @@ module.exports = {
 
                 if (prevPlayer === true) {
                   await buttonInteraction.editReply({
-                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`,
@@ -753,7 +760,7 @@ module.exports = {
                   });
                 } else {
                   await buttonInteraction.update({
-                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`,
@@ -766,6 +773,52 @@ module.exports = {
                   });
                 }
 
+                break;
+
+              case "modify_environment":
+                // Handle "Modify Environment" button click
+                try {
+                  // Set up the Environment Modification modal
+                  const environmentModificationModal = new ModalBuilder()
+                    .setCustomId("user-relocator-modal")
+                    .setTitle("User Relocator");
+
+                  const environmentNameInput = new TextInputBuilder()
+                    .setCustomId("environment-name-input")
+                    .setLabel("Environment name")
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setPlaceholder("Kobalt");
+
+                  const environmentUserInput = new TextInputBuilder()
+                    .setCustomId("environment-user-input")
+                    .setLabel("Environment user")
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setPlaceholder("123456789012345678, 123456789012345678")
+                    .setMinLength(18);
+
+                  const environmentNameRow =
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      environmentNameInput
+                    );
+                  const environmentUserRow =
+                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                      environmentUserInput
+                    );
+
+                  environmentModificationModal.addComponents(
+                    environmentNameRow,
+                    environmentUserRow
+                  );
+
+                  // Show the modal
+                  await buttonInteraction.showModal(
+                    environmentModificationModal
+                  );
+                } catch (error) {
+                  console.log(error);
+                }
                 break;
 
               // Skill Modification Buttons
@@ -1073,45 +1126,45 @@ module.exports = {
                 }
                 break;
 
-              case "remove_item":
-                // Handle "Remove Item" button click
+              case "revoke_item":
+                // Handle "Revoke Item" button click
                 try {
-                  // Set up the Remove Item modal
-                  const removeItemModal = new ModalBuilder()
-                    .setCustomId("remove-item-modal")
-                    .setTitle("Remove Item");
+                  // Set up the Revoke Item modal
+                  const revokeItemModal = new ModalBuilder()
+                    .setCustomId("revoke-item-modal")
+                    .setTitle("Revoke Item");
 
-                  const removeItemTargetInput = new TextInputBuilder()
-                    .setCustomId("remove-item-target-input")
+                  const revokeItemTargetInput = new TextInputBuilder()
+                    .setCustomId("revoke-item-target-input")
                     .setLabel("Target user ID")
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true)
                     .setMinLength(18);
 
-                  const removeItemNameInput = new TextInputBuilder()
-                    .setCustomId("remove-item-name-input")
+                  const revokeItemNameInput = new TextInputBuilder()
+                    .setCustomId("revoke-item-name-input")
                     .setLabel("Item Descriptor/Name")
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true);
 
                   const removeItemTargetRow =
                     new ActionRowBuilder<TextInputBuilder>().addComponents(
-                      removeItemTargetInput
+                      revokeItemTargetInput
                     );
                   const removeItemNameRow =
                     new ActionRowBuilder<TextInputBuilder>().addComponents(
-                      removeItemNameInput
+                      revokeItemNameInput
                     );
 
-                  removeItemModal.addComponents(
+                  revokeItemModal.addComponents(
                     removeItemNameRow,
                     removeItemTargetRow
                   );
 
                   // Show the modal
-                  await buttonInteraction.showModal(removeItemModal);
+                  await buttonInteraction.showModal(revokeItemModal);
                 } catch (error) {
-                  console.log("Error handling Remove Item modal:", error);
+                  console.log("Error handling Revoke Item modal:", error);
                 }
                 break;
 
@@ -1428,7 +1481,7 @@ module.exports = {
 
                 if (prevPlayer === true) {
                   await buttonInteraction.editReply({
-                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`,
@@ -1436,7 +1489,7 @@ module.exports = {
                   });
                 } else {
                   await buttonInteraction.update({
-                    content: `What would you like to do, Administrator ${targetUserObj.user.globalName.substr(
+                    content: `What would you like to do, Administrator ${userObj.user.globalName.substr(
                       0,
                       1
                     )}?`,
@@ -1805,14 +1858,15 @@ module.exports = {
           }
         );
       }
-      if (interaction.member.permissions instanceof PermissionsBitField)
-        if (
-          interaction.member.permissions.has(PermissionFlagsBits.Administrator)
-        ) {
-          adminMenu();
-        } else {
-          playerMenu();
-        }
+      if (!(interaction.member.permissions instanceof PermissionsBitField))
+        return;
+      if (
+        interaction.member.permissions.has(PermissionFlagsBits.Administrator)
+      ) {
+        adminMenu();
+      } else {
+        playerMenu();
+      }
     } catch (error) {
       if (error instanceof HTTPError && error.status === 503) {
         console.log(

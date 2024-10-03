@@ -10,30 +10,27 @@ import {
   Client,
   GuildMemberRoleManager,
   TextChannel,
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  ActionRowBuilder,
 } from "discord.js";
 import buttonWrapper from "../../utils/buttonWrapper";
 import userData from "../../models/userDatabaseSchema";
-import skillData from "../../models/skillDatabaseSchema";
 import itemData from "../../models/itemDatabaseSchema";
 import statusEffectData from "../../models/statusEffectDatabaseSchema";
 import environmentData from "../../models/environmentDatabaseSchema";
 import ms from "ms";
+import { Document } from "mongoose";
+import actions from "../../actions/actionIndex";
 
-module.exports = async (
+export default async (
   bot: Client,
   modalInteraction: ModalSubmitInteraction
 ) => {
   // Export the function
   if (!modalInteraction.isModalSubmit()) return;
-  let sharedStates: Array<object> = [];
   try {
     switch (
       modalInteraction.customId // Switch on the (pretty self-explanatory) custom IDs
     ) {
+      //region Admin modals
       // Stat Modal
       case "stats-giver-modal":
         // get input values
@@ -53,20 +50,6 @@ module.exports = async (
           "stats-giver-modifier-input"
         );
 
-        // Validate the inputs
-        if (
-          isNaN(statAmount) ||
-          statAmount < 0 ||
-          !modalInteraction.guild.members.cache.has(statsTargetUserInput)
-        ) {
-          await modalInteraction.reply({
-            content:
-              "Please enter a valid positive number for the stat amount and a valid user ID.",
-            ephemeral: true,
-          });
-          return;
-        }
-
         if (
           variant !== "strength" &&
           variant !== "will" &&
@@ -74,7 +57,9 @@ module.exports = async (
           variant !== "level" &&
           variant !== "exp"
         ) {
+          // Check if the variant is not a valid variant
           await modalInteraction.reply({
+            // Reply with an error message if so
             content:
               "Please enter a valid variant. Valid variants are 'strength', 'will', 'cognition', 'level', and 'exp'.",
             ephemeral: true,
@@ -83,7 +68,9 @@ module.exports = async (
         }
 
         if (modifier !== "add" && modifier !== "remove" && modifier !== "set") {
+          // Check if the modifier is not a valid modifier
           await modalInteraction.reply({
+            // Reply with an error message if so
             content:
               "Please enter a valid modifier. Valid modifiers are 'add', 'remove', and 'set'.",
             ephemeral: true,
@@ -91,95 +78,23 @@ module.exports = async (
           return;
         }
 
-        // Fetch the target user and update their stats
-        const statsTargetUserObj = await modalInteraction.guild.members.fetch(
-          statsTargetUserInput
-        );
-
-        const statsTargetUserData = await userData.findOne({
-          userId: statsTargetUserObj.user.id,
-          guildId: modalInteraction.guild.id,
-        });
-
-        if (!statsTargetUserData) {
+        if (isNaN(statAmount) || statAmount < 0) {
+          // Check if the stat amount is not a valid number
           await modalInteraction.reply({
-            content:
-              "User not found in the database. Please make sure the user has at least sent one message before running this command.",
+            // Reply with an error message if so
+            content: "Please enter a valid positive number for the stat amount",
             ephemeral: true,
           });
           return;
         }
 
-        if (modifier === "add") {
-          if (variant === "strength") {
-            statsTargetUserData.strength =
-              statsTargetUserData.strength + statAmount;
-          } else if (variant === "will") {
-            statsTargetUserData.will = statsTargetUserData.will + statAmount;
-          } else if (variant === "cognition") {
-            statsTargetUserData.cognition =
-              statsTargetUserData.cognition + statAmount;
-          } else if (variant === "level") {
-            statsTargetUserData.level = statsTargetUserData.level + statAmount;
-          } else if (variant === "exp") {
-            statsTargetUserData.exp = statsTargetUserData.exp + statAmount;
-          }
-          await statsTargetUserData.save();
-
-          await modalInteraction.reply({
-            content: `Successfully gave <@${statsTargetUserObj.user.id}> **${statAmount}** stat point(s) to the ${variant} variant!`,
-            ephemeral: true,
-          });
-        }
-        if (modifier === "remove") {
-          if (variant === "strength") {
-            statsTargetUserData.strength =
-              statsTargetUserData.strength - statAmount;
-          } else if (variant === "will") {
-            statsTargetUserData.will = statsTargetUserData.will - statAmount;
-          } else if (variant === "cognition") {
-            statsTargetUserData.cognition =
-              statsTargetUserData.cognition - statAmount;
-          } else if (variant === "level") {
-            statsTargetUserData.level = statsTargetUserData.level - statAmount;
-          } else if (variant === "exp") {
-            statsTargetUserData.exp = statsTargetUserData.exp - statAmount;
-          }
-          if (statsTargetUserData.strength < 0) {
-            statsTargetUserData.strength = 0;
-          }
-          if (statsTargetUserData.will < 0) {
-            statsTargetUserData.will = 0;
-          }
-          if (statsTargetUserData.cognition < 0) {
-            statsTargetUserData.cognition = 0;
-          }
-          await statsTargetUserData.save();
-
-          await modalInteraction.reply({
-            content: `Successfully took <@${statsTargetUserObj.user.id}> **${statAmount}** stat point(s) from ${variant}!`,
-            ephemeral: true,
-          });
-        }
-        if (modifier === "set") {
-          if (variant === "strength") {
-            statsTargetUserData.strength = statAmount;
-          } else if (variant === "will") {
-            statsTargetUserData.will = statAmount;
-          } else if (variant === "cognition") {
-            statsTargetUserData.cognition = statAmount;
-          } else if (variant === "level") {
-            statsTargetUserData.level = statAmount;
-          } else if (variant === "exp") {
-            statsTargetUserData.exp = statAmount;
-          }
-          await statsTargetUserData.save();
-
-          await modalInteraction.reply({
-            content: `Successfully set <@${statsTargetUserObj.user.id}>'s ${variant} to **${statAmount}!**`,
-            ephemeral: true,
-          });
-        }
+        actions.user.giveStat(
+          modalInteraction,
+          variant,
+          modifier,
+          statAmount,
+          statsTargetUserInput
+        );
         break;
 
       // Skill Modals
@@ -205,47 +120,14 @@ module.exports = async (
           modalInteraction.fields.getTextInputValue("create-skill-will-input")
         );
 
-        // Validate the inputs
-        if (
-          createSkillName === "" ||
-          createSkillDescription === "" ||
-          createSkillAction === "" ||
-          isNaN(createSkillCooldown) ||
-          isNaN(createSkillWill)
-        ) {
-          await modalInteraction.reply({
-            content:
-              "Please fill in all the required fields correctly. Cooldown and Will must be numbers.",
-            ephemeral: true,
-          });
-          return;
-        }
-        // check if skill already exists
-        if (await skillData.findOne({ skillName: createSkillName })) {
-          await modalInteraction.reply({
-            content: "Skill already exists. Please choose a different name.",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        // create a new skill and store it in the database
-
-        const newSkill = new skillData({
-          skillName: createSkillName,
-          skillDescription: createSkillDescription,
-          skillAction: createSkillAction,
-          skillCooldown: createSkillCooldown,
-          skillWill: createSkillWill,
-        });
-
-        await newSkill.save();
-
-        await modalInteraction.reply({
-          content: `Successfully created skill ${createSkillName}.`,
-          ephemeral: true,
-        });
-
+        actions.skill.create(
+          modalInteraction,
+          createSkillName,
+          createSkillDescription,
+          createSkillAction,
+          createSkillCooldown,
+          createSkillWill
+        );
         break;
 
       case "delete-skill-modal":
@@ -255,48 +137,7 @@ module.exports = async (
           .getTextInputValue("delete-skill-name-input")
           .toLowerCase();
 
-        // Validate the inputs
-        if (deleteSkillName === "") {
-          await modalInteraction.reply({
-            content: "Please fill in the required field.",
-            ephemeral: true,
-          });
-          return;
-        }
-        // first delete the skill from all users that have it
-        const skillUsers = await userData.find({
-          skills: { $elemMatch: { skillName: deleteSkillName } },
-        });
-
-        for (const skillUser of skillUsers) {
-          skillUser.skills = skillUser.skills.filter(
-            (skill) => skill.skillName !== deleteSkillName
-          );
-
-          if (skillUser.skills.length === 0) {
-            skillUser.skills = [];
-          }
-
-          await skillUser.save();
-        }
-
-        // delete the skill from the database
-        const deletedSkill = await skillData.deleteOne({
-          skillName: deleteSkillName,
-        });
-
-        if (deletedSkill.deletedCount === 0) {
-          await modalInteraction.reply({
-            content: `Failed to delete skill ${deleteSkillName}. Please check if the skill exists.`,
-            ephemeral: true,
-          });
-        } else {
-          await modalInteraction.reply({
-            content: `Successfully deleted skill ${deleteSkillName}.`,
-            ephemeral: true,
-          });
-        }
-
+        await actions.skill.delete(modalInteraction, deleteSkillName);
         break;
 
       case "grant-skill-modal":
@@ -309,64 +150,11 @@ module.exports = async (
           "grant-skill-target-input"
         );
 
-        // Validate the inputs
-        if (grantSkillName === "") {
-          await modalInteraction.reply({
-            content: "Please fill in the required fields.",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        // grant the skill to the target user
-        const grantSkillTargetUserData = await userData.findOne({
-          userId: grantSkillTarget,
-        });
-
-        if (!grantSkillTargetUserData) {
-          await modalInteraction.reply({
-            content:
-              "Target user not found. Make sure you entered a valid user ID.",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        const grantSkillSkill = await skillData.findOne({
-          skillName: grantSkillName,
-        });
-
-        if (!grantSkillSkill) {
-          await modalInteraction.reply({
-            content: `Skill ${grantSkillName} not found. Make sure you entered a valid skill name. Or create a new skill.`,
-            ephemeral: true,
-          });
-          return;
-        }
-
-        // check if the user already has the skill
-        if (
-          grantSkillTargetUserData.skills.some(
-            (skill) => skill === grantSkillName
-          )
-        ) {
-          await modalInteraction.reply({
-            content: `User already has skill ${grantSkillName}.`,
-            ephemeral: true,
-          });
-          return;
-        }
-
-        grantSkillSkill.skillUsers.push(grantSkillTargetUserData.userId);
-        await grantSkillSkill.save();
-        grantSkillTargetUserData.skills.push(grantSkillSkill.skillName);
-        await grantSkillTargetUserData.save();
-
-        await modalInteraction.reply({
-          content: `Successfully granted skill ${grantSkillName} to <@${grantSkillTarget}>.`,
-          ephemeral: true,
-        });
-
+        await actions.skill.grant(
+          modalInteraction,
+          grantSkillName,
+          grantSkillTarget
+        );
         break;
 
       case "revoke-skill-modal":
@@ -379,50 +167,11 @@ module.exports = async (
           "revoke-skill-target-input"
         );
 
-        // Validate the inputs
-        const revokeSkillData = await skillData.findOne({
-          skillName: revokeSkillName,
-        });
-
-        if (!revokeSkillData) {
-          await modalInteraction.reply({
-            content: `Skill ${revokeSkillName} not found. Make sure you entered a valid skill name. Or create a new skill.`,
-            ephemeral: true,
-          });
-          return;
-        }
-
-        const revokeSkillTargetData = await userData.findOne({
-          userId: revokeSkillTarget,
-          guildId: modalInteraction.guild.id,
-        });
-
-        if (!revokeSkillTargetData) {
-          await modalInteraction.reply({
-            content:
-              "Target user not found. Make sure you entered a valid user ID.",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        // check if the user has the skill
-        if (revokeSkillTargetData.skills.includes(revokeSkillName)) {
-          revokeSkillTargetData.skills = revokeSkillTargetData.skills.filter(
-            (skill) => skill !== revokeSkillName
-          );
-          await revokeSkillTargetData.save();
-          await modalInteraction.reply({
-            content: `Successfully revoked skill ${revokeSkillName} from <@${revokeSkillTarget}>.`,
-            ephemeral: true,
-          });
-        } else {
-          await modalInteraction.reply({
-            content: `User does not have skill ${revokeSkillName}.`,
-            ephemeral: true,
-          });
-        }
-
+        await actions.skill.revoke(
+          modalInteraction,
+          revokeSkillName,
+          revokeSkillTarget
+        );
         break;
 
       // Item Modals
@@ -438,102 +187,26 @@ module.exports = async (
         const itemActionable = modalInteraction.fields
           .getTextInputValue("create-item-actionable-input")
           .toLowerCase();
-        const itemAction = modalInteraction.fields.getTextInputValue(
-          "create-item-action-input"
-        );
 
-        function checkItemActionSyntax(actionString) {
-          if (actionString === "none") return true;
-          const actionParts = actionString.split(",");
-          const validOperators = ["+", "-"];
-          const validStats = ["STRENGTH", "WILL", "COGNITION"];
-
-          for (const action of actionParts) {
-            const [stat, operator, value] = action.trim().split(" ");
-            if (!validStats.includes(stat)) {
-              return false; // invalid stat
-            }
-            if (!validOperators.includes(operator)) {
-              return false; // invalid operator
-            }
-            if (isNaN(parseInt(value))) {
-              return false; // invalid value
-            }
-          }
-          return true; // syntax is correct
-        }
-
-        /*
-      
-      // the code to execute the item action using correct syntax
-
-      function executeItemAction(actionString, userData) {
-        if (actionString === "none") return;
-        const actionParts = actionString.split(",");
-        const operators = {
-          "+": (a, b) => a + b,
-          "-": (a, b) => a - b,
-        };
-
-        for (const action of actionParts) {
-          const [stat, operator, value] = action.trim().split(" ");
-          const statName = stat.toLowerCase();
-          const statValue = parseInt(value);
-          userData[statName] = operators[operator](
-            userData[statName],
-            statValue
-          );
-        }
-      }
-      */
-        // Validate the inputs
         if (
-          itemActionable !== "interact" &&
           itemActionable !== "consume" &&
-          itemActionable !== "use"
+          itemActionable !== "use" &&
+          itemActionable !== "interact"
         ) {
-          modalInteraction.reply({
+          await modalInteraction.reply({
             content:
-              "The third field must be either 'interact', 'consume' or 'use'.",
+              "Please enter a valid action. Valid actions are 'consume', 'use', and 'interact'.",
             ephemeral: true,
           });
           return;
         }
 
-        if (checkItemActionSyntax(itemAction) === false) {
-          modalInteraction.reply({
-            content:
-              "The fourth field must be a valid action syntax or 'none'.\nExample: COGNITION + 10, WILL - 5\nThey must be separated by a comma and a space. The operator must be either '+' or '-'. The stat must be either 'STRENGTH', 'WILL' or 'COGNITION'. The value must be a number. Each action must be separated by a space. so COGNITION+10, WILL-5 in invalid syntax.",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        const existingItem = await itemData.findOne({
-          itemName: itemName,
-        });
-        if (existingItem) {
-          modalInteraction.reply({
-            content:
-              "An item with that name already exists. You can skip this step.",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        const newItem = new itemData({
-          itemName: itemName,
-          itemDescription: itemDescription,
-          itemActionable: itemActionable,
-          itemAction: itemAction,
-        });
-
-        await newItem.save();
-
-        await modalInteraction.reply({
-          content: `Successfully created item ${itemName}.`,
-          ephemeral: true,
-        });
+        actions.item.create(
+          modalInteraction,
+          itemName,
+          itemDescription,
+          itemActionable
+        );
 
         break;
 
@@ -559,116 +232,31 @@ module.exports = async (
           });
           return;
         }
-        const giveItemTargetData = await userData.findOne({
-          userId: giveItemTarget,
-          guildId: modalInteraction.guild.id,
-        });
 
-        if (!giveItemTargetData) {
-          await modalInteraction.reply({
-            content: "User not found, make sure they exist in the database.",
-            ephemeral: true,
-          });
-        }
-
-        const giveItemData = await itemData.findOne({
-          itemName: giveItemName,
-        });
-
-        if (!giveItemData) {
-          await modalInteraction.reply({
-            content: "Item not found, make sure it exist in the database",
-            ephemeral: true,
-          });
-        }
-
-        const giveItemIndex = giveItemTargetData.inventory.findIndex(
-          (item) => item.itemName === giveItemData.itemName
+        await actions.item.give(
+          modalInteraction,
+          giveItemName,
+          giveItemTarget,
+          giveItemAmount
         );
-        if (giveItemIndex === -1) {
-          const inventoryObject = {
-            itemName: giveItemData.itemName,
-            itemAmount: giveItemAmount,
-          };
-          giveItemTargetData.inventory.push(inventoryObject);
-
-          await giveItemTargetData.save();
-        } else {
-          giveItemTargetData.inventory[giveItemIndex].itemAmount +=
-            giveItemAmount;
-
-          await giveItemTargetData.save();
-        }
-
-        giveItemData.itemUsers.push(giveItemTarget);
-
-        await giveItemData.save();
-
-        await modalInteraction.reply({
-          content: `Successfully gave ${giveItemAmount}x ${giveItemName} to <@${giveItemTarget}>.`,
-          ephemeral: true,
-        });
-
         break;
 
-      case "remove-item-modal":
+      case "revoke-item-modal":
         // get input values
 
         const removeItemName = modalInteraction.fields
-          .getTextInputValue("remove-item-name-input")
+          .getTextInputValue("revoke-item-name-input")
           .toLowerCase();
 
         const removeItemTarget = modalInteraction.fields.getTextInputValue(
-          "remove-item-target-input"
+          "revoke-item-target-input"
         );
 
-        // Validate the inputs
-
-        const removeItemData = await itemData.findOne({
-          itemName: removeItemName,
-        });
-
-        if (!removeItemData) {
-          await modalInteraction.reply({
-            content: "Item not found, make sure it exist in the database",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        const removeItemTargetData = await userData.findOne({
-          userId: removeItemTarget,
-          guildId: modalInteraction.guild.id,
-        });
-
-        if (!removeItemTargetData) {
-          await modalInteraction.reply({
-            content: "User not found, make sure they are in the server.",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        const removeItemIndex = removeItemTargetData.inventory.findIndex(
-          (item) => item.itemName === removeItemData.itemName
+        await actions.item.revoke(
+          modalInteraction,
+          removeItemName,
+          removeItemTarget
         );
-
-        if (removeItemIndex > -1) {
-          removeItemTargetData.inventory.splice(removeItemIndex, 1);
-          await removeItemTargetData.save();
-
-          await modalInteraction.reply({
-            content: `Successfully removed item ${removeItemName} from <@${removeItemTarget}>'s inventory.`,
-            ephemeral: true,
-          });
-        } else {
-          await modalInteraction.reply({
-            content: "User does not have the item in their inventory.",
-            ephemeral: true,
-          });
-          return;
-        }
-
         break;
 
       case "delete-item-modal":
@@ -680,60 +268,7 @@ module.exports = async (
 
         // Validate the inputs
 
-        const deleteItemData = await itemData.findOne({
-          itemName: deleteItemName,
-        });
-
-        if (!deleteItemData) {
-          await modalInteraction.reply({
-            content: "Item not found, make sure it exist in the database",
-            ephemeral: true,
-          });
-          return;
-        }
-        // Delete the item from people's inventories
-        const deleteItemUsers = deleteItemData.itemUsers;
-        for (const user of deleteItemUsers) {
-          const deleteItemUserData = await userData.findOne({
-            userId: user,
-            guildId: modalInteraction.guild.id,
-          });
-          const deleteItemIndex = deleteItemUserData.inventory.findIndex(
-            (item) => item.itemName === deleteItemName
-          );
-          if (deleteItemIndex > -1) {
-            deleteItemUserData.inventory.splice(deleteItemIndex, 1);
-            await deleteItemUserData.save();
-          }
-        }
-
-        // Delete the item from environments
-        const deleteItemEnvironments = deleteItemData.itemEnvironments;
-        for (const environment of deleteItemEnvironments) {
-          const deleteItemEnvironmentData = await environmentData.findOne({
-            environmentName: environment,
-          });
-          const deleteItemIndex =
-            deleteItemEnvironmentData.environmentItems.findIndex(
-              (item) => item.itemName === deleteItemName
-            );
-          if (deleteItemIndex > -1) {
-            deleteItemEnvironmentData.environmentItems.splice(
-              deleteItemIndex,
-              1
-            );
-            await deleteItemEnvironmentData.save();
-          }
-        }
-
-        // Delete the item from the database.
-        itemData.deleteOne({ itemName: deleteItemName });
-
-        await modalInteraction.reply({
-          content: `Successfully deleted item ${deleteItemName}.`,
-          ephemeral: true,
-        });
-
+        await actions.item.delete(modalInteraction, deleteItemName);
         break;
 
       // Status Effect Modals
@@ -753,31 +288,6 @@ module.exports = async (
         const statusEffectAction = modalInteraction.fields.getTextInputValue(
           "create-status-effect-action-input"
         );
-
-        // Validate the inputs
-
-        if (
-          statusEffectName === "" ||
-          statusEffectDuration === "" ||
-          statusEffectDescription === "" ||
-          statusEffectAction === ""
-        ) {
-          await modalInteraction.reply({
-            content: "Please fill in the required fields.",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        if (!checkItemActionSyntax(statusEffectAction)) {
-          await modalInteraction.reply({
-            content:
-              "Invalid status effect action syntax. Use 'none' for no action.",
-            ephemeral: true,
-          });
-          return;
-        }
-        // check if status effect already exists
 
         const statusEffectExistingData = await statusEffectData.findOne({
           statusEffectName: statusEffectName,
@@ -926,23 +436,26 @@ module.exports = async (
             .toLowerCase() // convert to lowercase
             .split(",")
             .map((itemName) => itemName.trim()); // convert to array, split by comma
-        const createEnvironmentChannel = parseInt(
+        const createEnvironmentChannel: string =
           // get channel input and convert to number
           modalInteraction.fields.getTextInputValue(
             "create-environment-channel-input"
-          )
-        );
+          );
 
-        const createEnvironmentItems: Array<object> = await Promise.all(
-          // await all promises
-          createEnvironmentItemsPromises.map(async (itemName: string) => {
-            // for each item
-            const item = await itemData.findOne({ itemName }); // get their corresponding data
-            return item; // return the item object into the new array
-          })
-        );
+        const createEnvironmentItems: Array<Array<Document | string> | string> =
+          await Promise.all(
+            // await all promises
+            createEnvironmentItemsPromises.map(async (itemName: string) => {
+              // for each item
+              if (itemName === "none") return itemName;
+              const item: Document = await itemData.findOne({ itemName }); // get their corresponding data
+              return [item, itemName]; // return the item object into the new array
+            })
+          );
 
-        if (isNaN(createEnvironmentChannel)) {
+        if (
+          !modalInteraction.guild.channels.cache.has(createEnvironmentChannel)
+        ) {
           // if channel id is not a number
           await modalInteraction.reply({
             // say so verbosely
@@ -965,45 +478,64 @@ module.exports = async (
           return;
         }
 
-        // Check if all items exist
-        const invalidItems = createEnvironmentItems.filter(
-          // filter out valid items into new array
-          (item) => !item
-        );
-        if (invalidItems.length > 0) {
-          // if there are invalid items
+        if (!createEnvironmentItems.includes("none")) {
+          // Check if all items exist
+          const invalidItems = createEnvironmentItems.filter(
+            // filter out valid items into new array
+            (item) => !item[0]
+          );
+          if (invalidItems.length > 0) {
+            // if there are invalid items
+            await modalInteraction.reply({
+              // say so verbosely
+              content: `Item(s) ${invalidItems
+                .map(
+                  (item: null, index: number) =>
+                    createEnvironmentItems[index][0]
+                )
+                .join(", ")} not found, make sure they exist in the database.`,
+              ephemeral: true,
+            });
+            return;
+          }
+          // give all items the environment name
+          createEnvironmentItems.forEach(async (item: any) => {
+            // for each existing item
+            item[0].itemEnvironments.push(createEnvironmentName);
+            item[0].save();
+          });
+          // create environment
+          const createEnvironment = new environmentData({
+            environmentName: createEnvironmentName,
+            environmentItems: createEnvironmentItems.map(
+              (item: Array<Document | string>) => item[1]
+            ),
+            environmentChannel: createEnvironmentChannel,
+          });
+          await createEnvironment.save();
           await modalInteraction.reply({
-            // say so verbosely
-            content: `Items ${invalidItems
-              .map((item, index) => createEnvironmentItems[index])
-              .join(", ")} not found, make sure they exist in the database.`,
+            content: `Successfully created environment ${createEnvironmentName}.\nWith item(s): ${createEnvironmentItems
+              .map((item: any) => {
+                if (!item) return "none";
+                else return item[1];
+              })
+              .join(", ")}. \nAnd channel: <#${createEnvironmentChannel}>`,
             ephemeral: true,
           });
-          return;
+        } else {
+          // create environment
+          const createEnvironment = new environmentData({
+            environmentName: createEnvironmentName,
+            environmentItems: [],
+            environmentChannel: createEnvironmentChannel,
+          });
+          await createEnvironment.save();
+          await modalInteraction.reply({
+            content: `Successfully created environment ${createEnvironmentName}.\nWith no items. \nAnd channel: <#${createEnvironmentChannel}>`,
+            ephemeral: true,
+          });
         }
 
-        // give all items the environment name
-        createEnvironmentItems.forEach(async (item: any) => {
-          // for each existing item
-          item.itemEnvironments.push(createEnvironmentName);
-          item.save();
-        });
-        // create environment
-        const createEnvironment = new environmentData({
-          environmentName: createEnvironmentName,
-          environmentItems: createEnvironmentItems.map(
-            (item: any) => item.itemName
-          ),
-          environmentChannel: createEnvironmentChannel,
-        });
-
-        await createEnvironment.save();
-        await modalInteraction.reply({
-          content: `Successfully created environment ${createEnvironmentName}.\n With items ${createEnvironmentItems.join(
-            ", "
-          )}. \n And channel: <#${createEnvironmentChannel}>`,
-          ephemeral: true,
-        });
         break;
 
       case "edit-environment-name-modal":
@@ -1066,14 +598,15 @@ module.exports = async (
           return;
         }
 
-        const editEnvironmentItems: Array<object> = await Promise.all(
-          editEnvironmentItemsPromises.map(async (itemName: string) => {
-            // for each item
-            const item = await itemData.findOne({ itemName }); // get their corresponding data
-            if (!item) return null;
-            else return item;
-          })
-        );
+        const editEnvironmentItems: Array<Document | string> =
+          await Promise.all(
+            editEnvironmentItemsPromises.map(async (itemName: string) => {
+              // for each item
+              const item = await itemData.findOne({ itemName }); // get their corresponding data
+              if (!item) return itemName;
+              else return item;
+            })
+          );
         const editEnvironmentInvalidItems = editEnvironmentItems.filter(
           // filter out valid items into new array
           (item) => !item
@@ -1082,8 +615,8 @@ module.exports = async (
           // if there are invalid items
           await modalInteraction.reply({
             // say so verbosely
-            content: `Items ${invalidItems
-              .map((item, index) => createEnvironmentItems[index])
+            content: `Items ${editEnvironmentInvalidItems
+              .map((item, index) => editEnvironmentItems[index])
               .join(", ")} not found, make sure they exist in the database.`,
             ephemeral: true,
           });
@@ -1112,9 +645,9 @@ module.exports = async (
 
             await editEnvironmentItemsData.save();
             await modalInteraction.reply({
-              content: `Successfully edited items in environment ${editEnvironmentItemsName} to ${editEnvironmentItems
+              content: `Successfully added item(s) ${editEnvironmentItems
                 .map((item: any) => item.itemName)
-                .join(", ")}.`,
+                .join(", ")} to environment ${editEnvironmentItemsName}.`,
               ephemeral: true,
             });
             break;
@@ -1191,6 +724,107 @@ module.exports = async (
           ephemeral: true,
         });
 
+        break;
+
+      case "delete-environment-modal":
+        // get input values
+        const deleteEnvironmentName: string = modalInteraction.fields
+          .getTextInputValue("delete-environment-name-input")
+          .toLowerCase();
+
+        const deleteEnvironmentObj: any = await environmentData.findOne({
+          environmentName: deleteEnvironmentName,
+        });
+        if (!deleteEnvironmentObj) {
+          await modalInteraction.reply({
+            content: "Environment not found!",
+            ephemeral: true,
+          });
+          return;
+        }
+
+        const startEnvironmentObj = await environmentData.findOne({
+          environmentName: "start",
+        });
+        deleteEnvironmentObj.environmentUsers.forEach(
+          async (userId: string) => {
+            const userObj = await userData.findOne({ userId: userId });
+            if (!userObj) return;
+
+            userObj.environment = "start";
+            startEnvironmentObj.environmentUsers.push(userId);
+            await userObj.save();
+            await startEnvironmentObj.save();
+          }
+        );
+
+        await deleteEnvironmentObj.deleteOne();
+        await modalInteraction.reply({
+          content: `Successfully deleted environment ${deleteEnvironmentName}.`,
+          ephemeral: true,
+        });
+        break;
+
+      case "user-relocator-modal":
+        // get input values
+        const relocateNameInput = modalInteraction.fields
+          .getTextInputValue("environment-name-input")
+          .toLowerCase();
+        const relocateUserId = modalInteraction.fields
+          .getTextInputValue("environment-user-input")
+          .toLowerCase()
+          .split(",")
+          .map((id: string) => id.trim());
+
+        const relocateEnvironmentObj = await environmentData.findOne({
+          environmentName: relocateNameInput,
+        });
+
+        if (!relocateEnvironmentObj) {
+          await modalInteraction.reply({
+            content: "Environment not found!",
+            ephemeral: true,
+          });
+          return;
+        }
+        relocateUserId.forEach(async (relocateUserId: string) => {
+          const relocateUserObj = await userData.findOne({
+            userId: relocateUserId,
+          });
+
+          if (!relocateUserObj) {
+            await modalInteraction.reply({
+              content: "User not found!",
+              ephemeral: true,
+            });
+            return;
+          }
+          if (relocateUserObj.environment) {
+            const relocateUserPreviousEnvironmentObj =
+              await environmentData.findOne({
+                environmentName: relocateUserObj.environment,
+              });
+
+            if (relocateUserPreviousEnvironmentObj) {
+              relocateUserPreviousEnvironmentObj.environmentUsers =
+                relocateUserPreviousEnvironmentObj.environmentUsers.filter(
+                  (user: string) => user !== relocateUserId
+                );
+
+              await relocateUserPreviousEnvironmentObj.save();
+            }
+          }
+          relocateUserObj.environment = relocateEnvironmentObj.environmentName;
+          relocateEnvironmentObj.environmentUsers.push(relocateUserId);
+          await relocateUserObj.save();
+          await relocateEnvironmentObj.save();
+        });
+
+        const relocateUserIds = relocateUserId.join(">, <@");
+        await modalInteraction.reply({
+          content: `Successfully relocated user(s) <@${relocateUserIds}> to environment ${relocateNameInput}.`,
+          ephemeral: true,
+        });
         break;
 
       // Bot Perform Modals
@@ -1473,12 +1107,20 @@ module.exports = async (
 
       default:
         modalInteraction.reply({
-          content: "Uhh something went wrong, Modal not found.",
+          content: "Something went wrong, Modal not found.",
           ephemeral: true,
         });
         break;
     }
   } catch (error) {
-    console.error("Error handling modal submission:", error);
+    console.error("Error processing a modal: ", error);
+
+    await modalInteraction
+      .reply({
+        content:
+          "Something went wrong, the modal could not be processed correctly.",
+        ephemeral: true,
+      })
+      .catch(console.error);
   }
 };

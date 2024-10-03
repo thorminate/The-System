@@ -20,7 +20,7 @@ import {
   GuildMemberRoleManager,
 } from "discord.js";
 
-module.exports = async (
+export default async (
   bot: Client,
   interaction:
     | StringSelectMenuInteraction

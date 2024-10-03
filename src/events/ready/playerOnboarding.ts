@@ -6,7 +6,7 @@ import {
   TextChannel,
 } from "discord.js";
 
-module.exports = async (bot: Client) => {
+export default async (bot: Client) => {
   const welcomeChannel = bot.channels.cache.get("1270790941892153404");
   if (!(welcomeChannel instanceof TextChannel)) return;
   await welcomeChannel.bulkDelete(100);

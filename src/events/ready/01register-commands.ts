@@ -4,7 +4,7 @@ import areCommandsDifferent from "../../utils/areCommandsDifferent";
 import getApplicationCommands from "../../utils/getApplicationCommands";
 import getLocalCommands from "../../utils/getLocalCommands";
 
-module.exports = async (bot: Client) => {
+export default async (bot: Client) => {
   try {
     // Define local commands and application commands
     const localCommands = await getLocalCommands();

@@ -2,7 +2,7 @@
 import { Client, Message } from "discord.js";
 import userData from "../../models/userDatabaseSchema";
 import calculateLevelExp from "../../utils/calculateLevelExp";
-import levelUp from "../../actions/levelUp";
+import actions from "../../actions/actionIndex";
 const cooldowns = new Set();
 
 // gets random number based on set parameters min and max
@@ -12,7 +12,7 @@ function getRandomExp(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-module.exports = async (bot: Client, message: Message) => {
+export default async (bot: Client, message: Message) => {
   // if message was not made in a guild, author was a bot or the cooldown is active, return
   if (
     !message.inGuild() ||
@@ -40,19 +40,16 @@ module.exports = async (bot: Client, message: Message) => {
 
       // if user has gained enough exp to level up, level up and say so to user.
       if (user.exp > calculateLevelExp(user.level)) {
-        await levelUp(user).then(async () => {
-          const botMessage = await message.reply({
-            content: `Hello, <@${message.member.id}>! you have leveled up!\nPlease check your status menu for your new stats!`,
-          });
-          setTimeout(() => {
-            botMessage.delete();
-          }, 60 * 1000);
+        await actions.user.levelUp(user);
+
+        const botMessage = await message.reply({
+          content: `Hello, <@${message.member.id}>! you have leveled up!\nPlease check your status menu for your new stats!`,
         });
+        setTimeout(() => {
+          botMessage.delete();
+        }, 60 * 1000);
       } else {
-        await user.save().catch((e: any) => {
-          console.log(`Error saving level: ${e}`);
-          return;
-        });
+        await user.save();
       }
 
       // set cooldown to 60 seconds

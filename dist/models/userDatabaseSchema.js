@@ -14,15 +14,20 @@ const userData = new mongoose_1.Schema({
         type: String,
         required: true,
     },
-    exp: {
-        // Define the exp.
-        type: Number,
-        default: 0,
+    environment: {
+        // Define the current environment.
+        type: String,
+        default: "start",
     },
     level: {
         // Define the level.
         type: Number,
         default: 1,
+    },
+    exp: {
+        // Define the exp.
+        type: Number,
+        default: 0,
     },
     strength: {
         // Define the strength.
@@ -39,6 +44,16 @@ const userData = new mongoose_1.Schema({
         type: Number,
         default: 0,
     },
+    species: {
+        // Define the species.
+        type: String,
+        default: "human",
+    },
+    class: {
+        // Define the class.
+        type: String,
+        default: "warrior",
+    },
     skills: {
         // Define the skills.
         type: (Array),
@@ -49,20 +64,10 @@ const userData = new mongoose_1.Schema({
         type: (Array),
         default: [],
     },
-    species: {
-        // Define the species.
-        type: String,
-        default: "human",
-    },
-    isOnboard: {
-        // Define the isOnboard.
-        type: Boolean,
-        default: false,
-    },
-    class: {
-        // Define the class.
-        type: String,
-        default: "warrior",
+    statusEffects: {
+        // Define the status effects.
+        type: (Array),
+        default: [],
     },
     willMultiplier: {
         // Define the will multiplier.
@@ -79,10 +84,10 @@ const userData = new mongoose_1.Schema({
         type: Number,
         default: 1,
     },
-    statusEffects: {
-        // Define the status effects.
-        type: (Array),
-        default: [],
+    isOnboard: {
+        // Define the isOnboard.
+        type: Boolean,
+        default: false,
     },
 });
 exports.default = (0, mongoose_1.model)("userDatabase", userData); // Export the model.

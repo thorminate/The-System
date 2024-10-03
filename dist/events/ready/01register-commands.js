@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const areCommandsDifferent_1 = __importDefault(require("../../utils/areCommandsDifferent"));
 const getApplicationCommands_1 = __importDefault(require("../../utils/getApplicationCommands"));
 const getLocalCommands_1 = __importDefault(require("../../utils/getLocalCommands"));
-module.exports = async (bot) => {
+exports.default = async (bot) => {
     try {
         // Define local commands and application commands
         const localCommands = await (0, getLocalCommands_1.default)();
