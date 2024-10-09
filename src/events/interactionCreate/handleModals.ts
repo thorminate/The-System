@@ -19,7 +19,8 @@ import environmentData from "../../models/environmentDatabaseSchema";
 import ms from "ms";
 import { Document } from "mongoose";
 import actions from "../../actions/actionIndex";
-import { parse } from "path";
+import path, { parse } from "path";
+import makeLogs from "../../utils/makeLogs";
 
 export default async (
   bot: Client,
@@ -344,9 +345,11 @@ export default async (
             "create-environment-channel-input"
           );
 
-        console.log(createEnvironmentItemsPromises);
-
-        break;
+        await actions.environment.create(modalInteraction, {
+          name: createEnvironmentName,
+          items: createEnvironmentItemsPromises,
+          channel: createEnvironmentChannel,
+        });
 
       case "edit-environment-name-modal":
         // get input values
@@ -922,6 +925,11 @@ export default async (
           content: "Something went wrong, Modal not found.",
           ephemeral: true,
         });
+
+        makeLogs(
+          path.join(__dirname, "..", "..", "..", "logs", `${Date.now()}.log`),
+          `Modal not found`
+        );
         break;
     }
   } catch (error) {
@@ -934,5 +942,10 @@ export default async (
         ephemeral: true,
       })
       .catch(console.error);
+    makeLogs(
+      path.join(__dirname, "..", "..", "..", "logs", `${Date.now()}.log`),
+      `Error processing a modal`,
+      error
+    );
   }
 };

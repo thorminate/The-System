@@ -11,6 +11,7 @@ import deleteItem from "./item/deleteItem";
 import statusCreate from "./status/statusCreate";
 import statusDelete from "./status/statusDelete";
 import statusGrant from "./status/statusGrant";
+import environmentCreate from "./environment/environmentCreate";
 
 /**
  * Index of all the actions
@@ -42,5 +43,8 @@ export default {
     create: statusCreate,
     delete: statusDelete,
     grant: statusGrant,
+  },
+  environment: {
+    create: environmentCreate,
   },
 };
