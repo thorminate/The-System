@@ -9,23 +9,11 @@ const manager = new ShardingManager("./dist/bot.js", {
   respawn: true, // We make sure the bot will respawn if it crashes.
 });
 
-manager.on("shardCreate", (shard) => {
+manager.once("shardCreate", (shard) => {
   // This event is fired when a shard is spawned.
-  shard.on("spawn", () => {
+  shard.once("spawn", () => {
     shard.once("ready", async () => {
       // This event is fired when the shard is ready.
-      console.log(
-        `Logged in as ${await shard.fetchClientValue("user.tag")}!`,
-        `\n   System Info:`,
-        `\n     Running on ${await shard.fetchClientValue(
-          "guilds.cache.size"
-        )} server(s)!`,
-        `\n     Running with ${await shard.fetchClientValue(
-          "users.cache.size"
-        )} member(s)!`,
-        `\n     API Latency: ${await shard.fetchClientValue("ws.ping")}ms`,
-        `\n     Shards: ${await shard.fetchClientValue("shard.count")}`
-      ); // Log that the the information.
       const rl = ReadLine.createInterface({
         // Create the readline interface.
         input: process.stdin, // input

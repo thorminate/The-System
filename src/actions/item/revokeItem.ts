@@ -2,13 +2,25 @@ import { ModalSubmitInteraction } from "discord.js";
 import ItemData from "../../models/itemDatabaseSchema";
 import UserData from "../../models/userDatabaseSchema";
 
+interface Options {
+  itemName: string;
+  targetId: string;
+}
+
+/**
+ * Revokes an item from a user.
+ * @param {ModalSubmitInteraction} interaction The interaction that ran the command.
+ * @param {Options} options The name of the item to be revoked and the target user's ID.
+ * @returns {Promise<void>}
+ */
 export default async (
   interaction: ModalSubmitInteraction,
-  itemName: string,
-  targetId: string
-) => {
+  options: Options
+): Promise<void> => {
+  const { itemName, targetId } = options;
+
   const itemData = await ItemData.findOne({
-    itemName: itemName,
+    name: itemName,
   });
 
   if (!itemData) {
@@ -20,8 +32,8 @@ export default async (
   }
 
   const targetData = await UserData.findOne({
-    userId: targetId,
-    guildId: interaction.guild.id,
+    id: targetId,
+    guild: interaction.guild.id,
   });
 
   if (!targetData) {
@@ -36,7 +48,7 @@ export default async (
     targetData.inventory = targetData.inventory.filter(
       (item) => item.itemName !== itemName
     );
-    itemData.itemUsers = itemData.itemUsers.filter((user) => user !== targetId);
+    itemData.users = itemData.users.filter((user) => user !== targetId);
     await targetData.save();
     await itemData.save();
 

@@ -1,13 +1,24 @@
 import { ModalSubmitInteraction } from "discord.js";
 import itemData from "../../models/itemDatabaseSchema";
 
+interface Options {
+  itemName: string;
+  itemDescription: string;
+  itemActionType: "interact" | "consume" | "use";
+}
+
+/**
+ * Creates an item in the database.
+ * @param {ModalSubmitInteraction} interaction The interaction that ran the command.
+ * @param {Options} options The name, description, and action type of the item.
+ */
 export default async (
   interaction: ModalSubmitInteraction,
-  itemName: string,
-  itemDescription: string,
-  itemActionType: "interact" | "consume" | "use"
+  options: Options
 ) => {
-  const item = await itemData.findOne({ itemName: itemName });
+  const { itemName, itemDescription, itemActionType } = options;
+
+  const item = await itemData.findOne({ name: itemName });
   if (item) {
     interaction.reply({
       content: "An item with that name already exists.",
@@ -17,9 +28,9 @@ export default async (
   }
 
   const newItem = new itemData({
-    itemName: itemName,
-    itemDescription: itemDescription,
-    itemActionable: itemActionType,
+    name: itemName,
+    description: itemDescription,
+    actionType: itemActionType,
   });
 
   await newItem.save();

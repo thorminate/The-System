@@ -3,27 +3,27 @@ import { Schema, model } from "mongoose"; // Import the mongoose library.
 
 const itemData = new Schema({
   // Define the schema.
-  itemName: {
+  name: {
     // Define the item name.
     type: String,
     required: true,
   },
-  itemDescription: {
+  description: {
     // Define the item description.
     type: String,
     required: true,
   },
-  itemActionable: {
+  actionType: {
     // Define the item actionable.
     type: String,
     required: true,
   },
-  itemUsers: {
+  users: {
     // Define the item users.
     type: Array<string>,
     default: [],
   },
-  itemEnvironments: {
+  environments: {
     // Define the item environments.
     type: Array<string>,
     default: [],

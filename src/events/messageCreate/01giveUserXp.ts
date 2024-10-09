@@ -27,8 +27,8 @@ export default async (bot: Client, message: Message) => {
   try {
     // gets user from userData
     const user = await userData.findOne({
-      userId: message.author.id,
-      guildId: message.guild.id,
+      id: message.author.id,
+      guild: message.guild.id,
     });
 
     // if userData(aka level) exists in database, check cooldown and give exp to user.
@@ -61,8 +61,8 @@ export default async (bot: Client, message: Message) => {
       // if user doesn't exist in database, create it and give exp to user.
     } else {
       const newUser = new userData({
-        userId: message.author.id,
-        guildId: message.guild.id,
+        id: message.author.id,
+        guild: message.guild.id,
         exp: expToGive,
       });
 

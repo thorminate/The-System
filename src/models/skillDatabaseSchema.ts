@@ -3,32 +3,32 @@ import { Schema, model } from "mongoose"; // Import the mongoose library.
 
 const skillData = new Schema({
   // Define the schema.
-  skillName: {
+  name: {
     // Define the skill name.
     type: String,
     required: true,
   },
-  skillDescription: {
+  description: {
     // Define the skill description.
     type: String,
     required: true,
   },
-  skillAction: {
+  action: {
     // Define the skill action.
     type: String,
     required: true,
   },
-  skillCooldown: {
+  cooldown: {
     // Define the skill cooldown.
     type: Number,
     required: true,
   },
-  skillWill: {
+  will: {
     // Define the skill will.
     type: Number,
     required: true,
   },
-  skillUsers: {
+  users: {
     // Define the skill users.
     type: Array<string>,
     default: [],

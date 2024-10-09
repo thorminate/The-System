@@ -19,6 +19,7 @@ import environmentData from "../../models/environmentDatabaseSchema";
 import ms from "ms";
 import { Document } from "mongoose";
 import actions from "../../actions/actionIndex";
+import { parse } from "path";
 
 export default async (
   bot: Client,
@@ -88,13 +89,12 @@ export default async (
           return;
         }
 
-        actions.user.giveStat(
-          modalInteraction,
+        actions.user.giveStat(modalInteraction, {
           variant,
           modifier,
-          statAmount,
-          statsTargetUserInput
-        );
+          amount: statAmount,
+          userId: statsTargetUserInput,
+        });
         break;
 
       // Skill Modals
@@ -120,14 +120,13 @@ export default async (
           modalInteraction.fields.getTextInputValue("create-skill-will-input")
         );
 
-        actions.skill.create(
-          modalInteraction,
-          createSkillName,
-          createSkillDescription,
-          createSkillAction,
-          createSkillCooldown,
-          createSkillWill
-        );
+        actions.skill.create(modalInteraction, {
+          name: createSkillName,
+          description: createSkillDescription,
+          action: createSkillAction,
+          cooldown: createSkillCooldown,
+          will: createSkillWill,
+        });
         break;
 
       case "delete-skill-modal":
@@ -150,11 +149,10 @@ export default async (
           "grant-skill-target-input"
         );
 
-        await actions.skill.grant(
-          modalInteraction,
-          grantSkillName,
-          grantSkillTarget
-        );
+        await actions.skill.grant(modalInteraction, {
+          skillName: grantSkillName,
+          targetId: grantSkillTarget,
+        });
         break;
 
       case "revoke-skill-modal":
@@ -167,11 +165,10 @@ export default async (
           "revoke-skill-target-input"
         );
 
-        await actions.skill.revoke(
-          modalInteraction,
-          revokeSkillName,
-          revokeSkillTarget
-        );
+        await actions.skill.revoke(modalInteraction, {
+          skillName: revokeSkillName,
+          targetId: revokeSkillTarget,
+        });
         break;
 
       // Item Modals
@@ -201,12 +198,11 @@ export default async (
           return;
         }
 
-        actions.item.create(
-          modalInteraction,
+        actions.item.create(modalInteraction, {
           itemName,
-          itemDescription,
-          itemActionable
-        );
+          itemDescription: itemDescription,
+          itemActionType: itemActionable,
+        });
 
         break;
 
@@ -233,12 +229,11 @@ export default async (
           return;
         }
 
-        await actions.item.give(
-          modalInteraction,
-          giveItemName,
-          giveItemTarget,
-          giveItemAmount
-        );
+        await actions.item.give(modalInteraction, {
+          itemName: giveItemName,
+          targetId: giveItemTarget,
+          amount: giveItemAmount,
+        });
         break;
 
       case "revoke-item-modal":
@@ -252,11 +247,10 @@ export default async (
           "revoke-item-target-input"
         );
 
-        await actions.item.revoke(
-          modalInteraction,
-          removeItemName,
-          removeItemTarget
-        );
+        await actions.item.revoke(modalInteraction, {
+          itemName: removeItemName,
+          targetId: removeItemTarget,
+        });
         break;
 
       case "delete-item-modal":
@@ -278,56 +272,28 @@ export default async (
         const statusEffectName = modalInteraction.fields
           .getTextInputValue("create-status-effect-name-input")
           .toLowerCase();
-        const statusEffectDuration = modalInteraction.fields
-          .getTextInputValue("create-status-effect-duration-input")
-          .toLowerCase();
+        const statusEffectDuration = parseInt(
+          modalInteraction.fields
+            .getTextInputValue("create-status-effect-duration-input")
+            .toLowerCase()
+        );
         const statusEffectDescription =
           modalInteraction.fields.getTextInputValue(
             "create-status-effect-description-input"
           );
-        const statusEffectAction = modalInteraction.fields.getTextInputValue(
-          "create-status-effect-action-input"
-        );
 
-        const statusEffectExistingData = await statusEffectData.findOne({
-          statusEffectName: statusEffectName,
-        });
-
-        if (statusEffectExistingData) {
+        if (isNaN(statusEffectDuration) || statusEffectDuration < 0) {
           await modalInteraction.reply({
-            content:
-              "Status effect already exists. Check database for more information.",
+            content: "Duration must be a valid positive number.",
             ephemeral: true,
           });
           return;
         }
 
-        const statusEffectDurationMs = ms(statusEffectDuration);
-
-        if (
-          statusEffectDurationMs < 0 ||
-          statusEffectDurationMs > 86400000 ||
-          isNaN(statusEffectDurationMs)
-        ) {
-          await modalInteraction.reply({
-            content: "Status effect duration invalid!",
-            ephemeral: true,
-          });
-          return;
-        }
-        // create status effect
-
-        const statusEffectNew = new statusEffectData({
-          statusEffectName: statusEffectName,
-          statusEffectDuration: statusEffectDurationMs,
-          statusEffectDescription: statusEffectDescription,
-          statusEffectAction: statusEffectAction,
-        });
-
-        await statusEffectNew.save();
-        await modalInteraction.reply({
-          content: `Successfully created status effect ${statusEffectName}.`,
-          ephemeral: true,
+        actions.statusEffect.create(modalInteraction, {
+          name: statusEffectName,
+          duration: statusEffectDuration,
+          description: statusEffectDescription,
         });
 
         break;
@@ -340,38 +306,7 @@ export default async (
           .toLowerCase();
 
         // Validate the inputs
-        const deleteStatusEffectData = await statusEffectData.findOne({
-          statusEffectName: deleteStatusEffectName,
-        });
-
-        if (!deleteStatusEffectData) {
-          await modalInteraction.reply({
-            content:
-              "Status effect not found, make sure it exist in the database",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        // delete status effect from all users
-        deleteStatusEffectData.statusEffectUsers.forEach(async (user) => {
-          await userData.findOne({ userId: user }).then((user) => {
-            if (user) {
-              user.statusEffects = user.statusEffects.filter(
-                (effect) => effect.statusEffectName !== deleteStatusEffectName
-              );
-            }
-          });
-        });
-
-        await statusEffectData.deleteOne({
-          statusEffectName: deleteStatusEffectName,
-        });
-
-        await modalInteraction.reply({
-          content: `Successfully deleted status effect ${deleteStatusEffectName}.`,
-          ephemeral: true,
-        });
+        actions.statusEffect.delete(modalInteraction, deleteStatusEffectName);
 
         break;
 
@@ -385,42 +320,9 @@ export default async (
             "grant-status-effect-target-input"
           );
 
-        // Validate the inputs
-        const grantStatusEffectData = await statusEffectData.findOne({
+        await actions.statusEffect.grant(modalInteraction, {
           statusEffectName: grantStatusEffectName,
-        });
-
-        if (!grantStatusEffectData) {
-          await modalInteraction.reply({
-            content:
-              "Status effect not found, make sure it exists in the database",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        const grantStatusEffectTargetData = await userData.findOne({
-          userId: grantStatusEffectTarget,
-          guildId: modalInteraction.guild.id,
-        });
-
-        if (!grantStatusEffectTargetData) {
-          await modalInteraction.reply({
-            content: "User not found!",
-            ephemeral: true,
-          });
-          return;
-        }
-
-        grantStatusEffectTargetData.statusEffects.push({
-          statusEffectName: grantStatusEffectData.statusEffectName,
-          statusEffectTimestamp: Date.now(),
-        });
-
-        await grantStatusEffectTargetData.save();
-        await modalInteraction.reply({
-          content: `Successfully granted status effect ${grantStatusEffectName} to ${grantStatusEffectTarget}.`,
-          ephemeral: true,
+          targetId: grantStatusEffectTarget,
         });
         break;
 
@@ -442,99 +344,7 @@ export default async (
             "create-environment-channel-input"
           );
 
-        const createEnvironmentItems: Array<Array<Document | string> | string> =
-          await Promise.all(
-            // await all promises
-            createEnvironmentItemsPromises.map(async (itemName: string) => {
-              // for each item
-              if (itemName === "none") return itemName;
-              const item: Document = await itemData.findOne({ itemName }); // get their corresponding data
-              return [item, itemName]; // return the item object into the new array
-            })
-          );
-
-        if (
-          !modalInteraction.guild.channels.cache.has(createEnvironmentChannel)
-        ) {
-          // if channel id is not a number
-          await modalInteraction.reply({
-            // say so verbosely
-            content: "Channel ID invalid!",
-            ephemeral: true,
-          });
-          return;
-        }
-        if (
-          await environmentData.findOne({
-            environmentName: createEnvironmentName,
-          })
-        ) {
-          // if environment already exists
-          await modalInteraction.reply({
-            // say so verbosely
-            content: `Environment ${createEnvironmentName} already exists.`,
-            ephemeral: true,
-          });
-          return;
-        }
-
-        if (!createEnvironmentItems.includes("none")) {
-          // Check if all items exist
-          const invalidItems = createEnvironmentItems.filter(
-            // filter out valid items into new array
-            (item) => !item[0]
-          );
-          if (invalidItems.length > 0) {
-            // if there are invalid items
-            await modalInteraction.reply({
-              // say so verbosely
-              content: `Item(s) ${invalidItems
-                .map(
-                  (item: null, index: number) =>
-                    createEnvironmentItems[index][0]
-                )
-                .join(", ")} not found, make sure they exist in the database.`,
-              ephemeral: true,
-            });
-            return;
-          }
-          // give all items the environment name
-          createEnvironmentItems.forEach(async (item: any) => {
-            // for each existing item
-            item[0].itemEnvironments.push(createEnvironmentName);
-            item[0].save();
-          });
-          // create environment
-          const createEnvironment = new environmentData({
-            environmentName: createEnvironmentName,
-            environmentItems: createEnvironmentItems.map(
-              (item: Array<Document | string>) => item[1]
-            ),
-            environmentChannel: createEnvironmentChannel,
-          });
-          await createEnvironment.save();
-          await modalInteraction.reply({
-            content: `Successfully created environment ${createEnvironmentName}.\nWith item(s): ${createEnvironmentItems
-              .map((item: any) => {
-                if (!item) return "none";
-                else return item[1];
-              })
-              .join(", ")}. \nAnd channel: <#${createEnvironmentChannel}>`,
-            ephemeral: true,
-          });
-        } else {
-          // create environment
-          const createEnvironment = new environmentData({
-            environmentName: createEnvironmentName,
-            environmentItems: [],
-            environmentChannel: createEnvironmentChannel,
-          });
-          await createEnvironment.save();
-          await modalInteraction.reply({
-            content: `Successfully created environment ${createEnvironmentName}.\nWith no items. \nAnd channel: <#${createEnvironmentChannel}>`,
-            ephemeral: true,
-          });
-        }
+        console.log(createEnvironmentItemsPromises);
 
         break;
 
@@ -550,11 +360,11 @@ export default async (
 
         // Validate and format the inputs
         const editEnvironmentNameData = await environmentData.findOne({
-          environmentName: editEnvironmentName,
+          name: editEnvironmentName,
         });
 
         if (editEnvironmentNameData) {
-          editEnvironmentNameData.environmentName = editEnvironmentNewName;
+          editEnvironmentNameData.name = editEnvironmentNewName;
           await editEnvironmentNameData.save();
 
           await modalInteraction.reply({
@@ -587,7 +397,7 @@ export default async (
             .map((item) => item.trim());
 
         const editEnvironmentItemsData = await environmentData.findOne({
-          environmentName: editEnvironmentItemsName,
+          name: editEnvironmentItemsName,
         });
 
         if (!editEnvironmentItemsData) {
@@ -602,7 +412,7 @@ export default async (
           await Promise.all(
             editEnvironmentItemsPromises.map(async (itemName: string) => {
               // for each item
-              const item = await itemData.findOne({ itemName }); // get their corresponding data
+              const item = await itemData.findOne({ name: itemName }); // get their corresponding data
               if (!item) return itemName;
               else return item;
             })
@@ -625,7 +435,7 @@ export default async (
         switch (editEnvironmentItemsOperator) {
           case "add":
             if (
-              editEnvironmentItemsData.environmentItems.includes(
+              editEnvironmentItemsData.items.includes(
                 editEnvironmentItems.map((item: any) => item.itemName)
               )
             ) {
@@ -639,7 +449,7 @@ export default async (
               });
               return;
             }
-            editEnvironmentItemsData.environmentItems.push(
+            editEnvironmentItemsData.items.push(
               ...editEnvironmentItems.map((item: any) => item.itemName)
             );
 
@@ -653,8 +463,8 @@ export default async (
             break;
 
           case "remove":
-            editEnvironmentItemsData.environmentItems =
-              editEnvironmentItemsData.environmentItems.filter(
+            editEnvironmentItemsData.items =
+              editEnvironmentItemsData.items.filter(
                 (itemName: string) =>
                   !editEnvironmentItems.some(
                     (item: any) => item.itemName === itemName
@@ -670,8 +480,9 @@ export default async (
             break;
 
           case "set":
-            editEnvironmentItemsData.environmentItems =
-              editEnvironmentItems.map((item: any) => item.itemName);
+            editEnvironmentItemsData.items = editEnvironmentItems.map(
+              (item: any) => item.itemName
+            );
 
             await editEnvironmentItemsData.save();
             await modalInteraction.reply({
@@ -706,7 +517,7 @@ export default async (
         }
 
         const editEnvironmentChannelObj = await environmentData.findOne({
-          environmentName: editEnvironmentChannelName,
+          name: editEnvironmentChannelName,
         });
 
         if (!editEnvironmentChannelObj) {
@@ -717,7 +528,7 @@ export default async (
           return;
         }
 
-        editEnvironmentChannelObj.environmentChannel = editEnvironmentChannel;
+        editEnvironmentChannelObj.channel = editEnvironmentChannel;
         await editEnvironmentChannelObj.save();
         await modalInteraction.reply({
           content: `Successfully edited environment ${editEnvironmentChannelName} to <#${editEnvironmentChannel}>.`,
@@ -733,7 +544,7 @@ export default async (
           .toLowerCase();
 
         const deleteEnvironmentObj: any = await environmentData.findOne({
-          environmentName: deleteEnvironmentName,
+          name: deleteEnvironmentName,
         });
         if (!deleteEnvironmentObj) {
           await modalInteraction.reply({
@@ -744,19 +555,20 @@ export default async (
         }
 
         const startEnvironmentObj = await environmentData.findOne({
-          environmentName: "start",
+          name: "start",
         });
-        deleteEnvironmentObj.environmentUsers.forEach(
-          async (userId: string) => {
-            const userObj = await userData.findOne({ userId: userId });
-            if (!userObj) return;
+        deleteEnvironmentObj.environmentUsers.forEach(async (id: string) => {
+          const userObj = await userData.findOne({
+            id,
+            guild: modalInteraction.guild.id,
+          });
+          if (!userObj) return;
 
-            userObj.environment = "start";
-            startEnvironmentObj.environmentUsers.push(userId);
-            await userObj.save();
-            await startEnvironmentObj.save();
-          }
-        );
+          userObj.environment = "start";
+          startEnvironmentObj.users.push(id);
+          await userObj.save();
+          await startEnvironmentObj.save();
+        });
 
         await deleteEnvironmentObj.deleteOne();
         await modalInteraction.reply({
@@ -777,7 +589,7 @@ export default async (
           .map((id: string) => id.trim());
 
         const relocateEnvironmentObj = await environmentData.findOne({
-          environmentName: relocateNameInput,
+          name: relocateNameInput,
         });
 
         if (!relocateEnvironmentObj) {
@@ -789,7 +601,7 @@ export default async (
         }
         relocateUserId.forEach(async (relocateUserId: string) => {
           const relocateUserObj = await userData.findOne({
-            userId: relocateUserId,
+            id: relocateUserId,
           });
 
           if (!relocateUserObj) {
@@ -802,20 +614,20 @@ export default async (
           if (relocateUserObj.environment) {
             const relocateUserPreviousEnvironmentObj =
               await environmentData.findOne({
-                environmentName: relocateUserObj.environment,
+                name: relocateUserObj.environment,
               });
 
             if (relocateUserPreviousEnvironmentObj) {
-              relocateUserPreviousEnvironmentObj.environmentUsers =
-                relocateUserPreviousEnvironmentObj.environmentUsers.filter(
+              relocateUserPreviousEnvironmentObj.users =
+                relocateUserPreviousEnvironmentObj.users.filter(
                   (user: string) => user !== relocateUserId
                 );
 
               await relocateUserPreviousEnvironmentObj.save();
             }
           }
-          relocateUserObj.environment = relocateEnvironmentObj.environmentName;
-          relocateEnvironmentObj.environmentUsers.push(relocateUserId);
+          relocateUserObj.environment = relocateEnvironmentObj.name;
+          relocateEnvironmentObj.users.push(relocateUserId);
           await relocateUserObj.save();
           await relocateEnvironmentObj.save();
         });

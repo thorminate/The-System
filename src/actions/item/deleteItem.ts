@@ -8,7 +8,7 @@ export default async (
   itemName: string
 ) => {
   const itemData = await ItemData.findOne({
-    itemName: itemName,
+    name: itemName,
   });
 
   if (!itemData) {
@@ -20,10 +20,10 @@ export default async (
   }
   // Delete the item from people's inventories
 
-  for (const user of itemData.itemUsers) {
+  for (const user of itemData.users) {
     const userData = await UserData.findOne({
-      userId: user,
-      guildId: interaction.guild.id,
+      id: user,
+      guild: interaction.guild.id,
     });
     userData.inventory = userData.inventory.filter(
       (item) => item.itemName !== itemName
@@ -33,12 +33,12 @@ export default async (
   }
 
   // Delete the item from environments
-  for (const environment of itemData.itemEnvironments) {
+  for (const environment of itemData.environments) {
     const environmentData = await EnvironmentData.findOne({
-      environmentName: environment,
+      name: environment,
     });
 
-    environmentData.environmentItems = environmentData.environmentItems.filter(
+    environmentData.items = environmentData.items.filter(
       (item) => item.itemName !== itemName
     );
   }

@@ -32,12 +32,12 @@ export default async (
   switch (interaction.customId) {
     case "species-select":
       if (!interaction.isStringSelectMenu()) return;
-      let user = await userData.findOne({ userId: interaction.user.id });
+      let user = await userData.findOne({ id: interaction.user.id });
 
       if (!user) {
         const newUser = new userData({
-          userId: interaction.user.id,
-          guildId: interaction.guild.id,
+          id: interaction.user.id,
+          guild: interaction.guild.id,
         });
         user = newUser;
       }
@@ -45,21 +45,21 @@ export default async (
       await interaction.values.forEach(async (value) => {
         user.species = value;
         if (value === "Human") {
-          user.strengthMultiplier = 1.1;
-          user.willMultiplier = 1.1;
-          user.cognitionMultiplier = 1.1;
+          user.multipliers.strength = 1.1;
+          user.multipliers.will = 1.1;
+          user.multipliers.cognition = 1.1;
         } else if (value === "Elf") {
-          user.strengthMultiplier = 0.9;
-          user.willMultiplier = 1.3;
-          user.cognitionMultiplier = 1.1;
+          user.multipliers.strength = 0.9;
+          user.multipliers.will = 1.3;
+          user.multipliers.cognition = 1.1;
         } else if (value === "Dwarf") {
-          user.strengthMultiplier = 1.1;
-          user.willMultiplier = 0.9;
-          user.cognitionMultiplier = 1.3;
+          user.multipliers.strength = 1.1;
+          user.multipliers.will = 0.9;
+          user.multipliers.cognition = 1.3;
         } else if (value === "Orc") {
-          user.strengthMultiplier = 1.3;
-          user.willMultiplier = 1.1;
-          user.cognitionMultiplier = 0.9;
+          user.multipliers.strength = 1.3;
+          user.multipliers.will = 1.1;
+          user.multipliers.cognition = 0.9;
         }
         await user.save();
 
@@ -107,7 +107,7 @@ export default async (
       if (!interaction.isStringSelectMenu()) return;
       const selectedClass = interaction.values[0];
 
-      const userClass = await userData.findOne({ userId: interaction.user.id });
+      const userClass = await userData.findOne({ id: interaction.user.id });
 
       if (userClass) {
         userClass.class = selectedClass;
@@ -133,7 +133,7 @@ export default async (
         const messages = await onboardingChannel.messages.fetch({ limit: 1 });
         const message = messages.first();
         const resetButton = new ButtonBuilder()
-          .setCustomId("welcome-channel-begin-onboarding")
+          .setCustomId("begin-onboarding")
           .setLabel("Begin Onboarding")
           .setStyle(ButtonStyle.Success)
           .setDisabled(false);
@@ -145,11 +145,9 @@ export default async (
         await message.edit({
           components: [resetRow],
         });
-        setTimeout(() => {
-          (interaction.member.roles as GuildMemberRoleManager).add(
-            "1270791621289578607"
-          );
-        }, 4000);
+        (interaction.member.roles as GuildMemberRoleManager).add(
+          "1270791621289578607"
+        );
       }
       break;
   }

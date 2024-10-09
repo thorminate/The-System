@@ -1,23 +1,23 @@
 import { ModalSubmitInteraction } from "discord.js";
 import UserData from "../../models/userDatabaseSchema";
 
+interface Options {
+  variant: "strength" | "will" | "cognition" | "level" | "exp";
+  modifier: "add" | "remove" | "set";
+  amount: number;
+  userId: string;
+}
 /**
  * Gives a defined amount of stat point(s) to the target user.
  * @param {ModalSubmitInteraction} interaction The interaction that ran the command.
- * @param {string} variant The variant of the stat point(s) to be given. Valid variants are 'strength', 'will', 'cognition', 'level', and 'exp'.
- * @param {string} modifier The modifier of the stat point(s) to be given. Valid modifiers are 'add', 'remove', and 'set'.
- * @param {number} amount The amount of stat point(s) to be given.
- * @param {string} userId The ID of the target user.
- * @param {boolean} strict Whether the command should check if the amount, modifier, and variant are valid. Default is false.
+ * @param {Options} options The variant, modifier, and amount of stat point(s) to be given.
  * @returns {Promise<void>}
  */
 export default async (
   interaction: ModalSubmitInteraction,
-  variant: "strength" | "will" | "cognition" | "level" | "exp",
-  modifier: "add" | "remove" | "set",
-  amount: number,
-  userId: string
+  options: Options
 ): Promise<void> => {
+  let { variant, modifier, amount, userId } = options;
   const userObj = await interaction.guild.members.fetch(userId); // Fetch the target user by their ID
 
   if (!userObj) {
@@ -32,8 +32,8 @@ export default async (
 
   const userData = await UserData.findOne({
     // Find the target user in the database
-    userId: userObj.user.id,
-    guildId: interaction.guild.id,
+    id: userObj.user.id,
+    guild: interaction.guild.id,
   });
 
   if (!userData) {

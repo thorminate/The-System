@@ -26,7 +26,7 @@ export default (bot: Client) => {
         const filePath = path.resolve(eventFile); // Get the path to the event file.
         const fileUrl = url.pathToFileURL(filePath); // Get the URL to the event file.
         const eventFunction = await import(fileUrl.toString()); // Get the event function.
-        eventFunction.default.default(bot, arg); // Run the event function. (no idea why the extra default is needed)
+        await eventFunction.default.default(bot, arg); // Run the event function. (no idea why the extra default is needed)
       }
     });
   }

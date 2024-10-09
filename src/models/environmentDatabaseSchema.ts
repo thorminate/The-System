@@ -3,22 +3,22 @@ import { Schema, model } from "mongoose"; // Import the mongoose library.
 
 const environmentData = new Schema({
   // Define the schema.
-  environmentName: {
+  name: {
     // Define the environment name.
     type: String,
     required: true,
   },
-  environmentChannel: {
+  channel: {
     // Define the environment channel.
     type: String,
     required: true,
   },
-  environmentItems: {
+  items: {
     // Define the environment items.
     type: Array<object>,
     default: [],
   },
-  environmentUsers: {
+  users: {
     // Define the environment users.
     type: Array<string>,
     default: [],

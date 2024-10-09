@@ -37,7 +37,7 @@ const bot = new Client({
   ],
 });
 
-const MongoDBToken = process.env.MONGODB_URI + "/the_system"; // Get the MongoDB token.
+const MongoDBToken = process.env.MONGODB_URI + "the_system"; // Get the MongoDB token.
 const DiscordToken = process.env.TOKEN; // Get the Discord token.
 // Connect to DB and Discord.
 (async () => {

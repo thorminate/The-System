@@ -1,9 +1,4 @@
-import {
-  Client,
-  CommandInteraction,
-  GuildMember,
-  InteractionReplyOptions,
-} from "discord.js";
+import { Client, CommandInteraction, GuildMember } from "discord.js";
 import commandVerify from "../../utils/commandVerify";
 import UserData from "../../models/userDatabaseSchema";
 import EnvironmentData from "../../models/environmentDatabaseSchema";
@@ -25,11 +20,9 @@ module.exports = {
         ephemeral: true,
       });
 
-      const userId = (interaction.member as GuildMember).id;
-
       const userData = await UserData.findOne({
-        userId: userId,
-        guildId: interaction.guild.id,
+        id: interaction.user.id,
+        guild: interaction.guild.id,
       });
 
       if (!userData) {
@@ -41,7 +34,7 @@ module.exports = {
       }
 
       const userEnvironmentData = await EnvironmentData.findOne({
-        environmentName: userData.environment,
+        name: userData.environment,
       });
 
       if (!userEnvironmentData) {
@@ -50,15 +43,15 @@ module.exports = {
         });
         return;
       }
-      if (userEnvironmentData.environmentChannel !== interaction.channel.id) {
+      if (userEnvironmentData.channel !== interaction.channel.id) {
         await interaction.editReply({
-          content: `You can only look in your current environment, <#${userEnvironmentData.environmentChannel}>`,
+          content: `You can only look in your current environment, <#${userEnvironmentData.channel}>`,
         });
         return;
       }
 
       await interaction.editReply({
-        content: (await userEnvironmentData).environmentItems.join(", "),
+        content: (await userEnvironmentData).items.join(", "),
       });
     } catch (error) {
       console.log(error);

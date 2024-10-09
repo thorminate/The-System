@@ -27,8 +27,8 @@ export default async (bot: Client, buttonInteraction: ButtonInteraction) => {
     // Onboarding buttons
     case "begin-onboarding":
       let user = await userData.findOne({
-        userId: buttonInteraction.user.id,
-        guildId: buttonInteraction.guild.id,
+        id: buttonInteraction.user.id,
+        guild: buttonInteraction.guild.id,
       });
       const userDiscord = await buttonInteraction.guild.members.fetch(
         buttonInteraction.user.id
@@ -36,8 +36,8 @@ export default async (bot: Client, buttonInteraction: ButtonInteraction) => {
 
       if (!user) {
         const newUser = new userData({
-          userId: buttonInteraction.user.id,
-          guildId: buttonInteraction.guild.id,
+          id: buttonInteraction.user.id,
+          guild: buttonInteraction.guild.id,
           isOnboard: false,
         });
 

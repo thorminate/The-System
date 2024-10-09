@@ -11,7 +11,7 @@ export default async function (bot: Client, guildId: string | null) {
     | GuildApplicationCommandManager; // define applicationCommands.
 
   if (guildId) {
-    // if guildId is not undefined
+    // if guild is not undefined
     const guild = await bot.guilds.fetch(guildId); // fetch guild
     applicationCommands = guild.commands; // get guild commands
   } else {

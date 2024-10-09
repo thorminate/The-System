@@ -3,27 +3,22 @@ import { Schema, model } from "mongoose"; // Import the mongoose library.
 
 const statusEffectData = new Schema({
   // Define the schema.
-  statusEffectName: {
+  name: {
     // Define the status effect name.
     type: String,
     required: true,
   },
-  statusEffectDescription: {
-    // Define the status effect description.
-    type: String,
-    required: true,
-  },
-  statusEffectDuration: {
+  duration: {
     // Define the status effect duration.
     type: Number,
     required: true,
   },
-  statusEffectAction: {
-    // Define the status effect action.
+  description: {
+    // Define the status effect description.
     type: String,
     required: true,
   },
-  statusEffectUsers: {
+  users: {
     // Define the status effect users.
     type: Array<string>,
     default: [],

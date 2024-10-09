@@ -2,20 +2,25 @@ import { ModalSubmitInteraction } from "discord.js";
 import SkillData from "../../models/skillDatabaseSchema";
 import UserData from "../../models/userDatabaseSchema";
 
+interface Options {
+  skillName: string;
+  targetId: string;
+}
+
 /**
  * Grants a skill to a target user.
  * @param {ModalSubmitInteraction} interaction The interaction that ran the command.
- * @param {string} skillName The name of the skill to be granted.
- * @param {string} targetId The ID of the target user.
+ * @param {Options} options
  * @returns {Promise<void>}
  */
 export default async (
   interaction: ModalSubmitInteraction,
-  skillName: string,
-  targetId: string
-) => {
+  options: Options
+): Promise<void> => {
+  const { skillName, targetId } = options;
+
   const targetData = await UserData.findOne({
-    userId: targetId,
+    id: targetId,
   });
 
   if (!targetData) {
@@ -27,7 +32,7 @@ export default async (
   }
 
   const skillData = await SkillData.findOne({
-    skillName: skillName,
+    name: skillName,
   });
 
   if (!skillData) {
@@ -39,7 +44,7 @@ export default async (
   }
 
   // check if the user already has the skill
-  if (targetData.skills.some((skill) => skill === skillData.skillName)) {
+  if (targetData.skills.some((skill) => skill === skillData.name)) {
     await interaction.reply({
       content: `User already has skill ${skillName}.`,
       ephemeral: true,
@@ -47,9 +52,9 @@ export default async (
     return;
   }
 
-  skillData.skillUsers.push(targetData.userId);
+  skillData.users.push(targetData.id);
   await skillData.save();
-  targetData.skills.push(skillData.skillName);
+  targetData.skills.push(skillData.name);
   await targetData.save();
 
   await interaction.reply({
