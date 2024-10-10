@@ -2,6 +2,7 @@ import { Client, CommandInteraction, GuildMember } from "discord.js";
 import commandVerify from "../../utils/commandVerify";
 import UserData from "../../models/userDatabaseSchema";
 import EnvironmentData from "../../models/environmentDatabaseSchema";
+import log from "../../utils/log";
 
 module.exports = {
   name: "look",
@@ -55,6 +56,11 @@ module.exports = {
       });
     } catch (error) {
       console.log(error);
+      log({
+        header: "Look Error",
+        payload: `${error}`,
+        type: "error",
+      });
     }
   },
 };

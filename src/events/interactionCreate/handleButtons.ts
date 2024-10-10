@@ -20,6 +20,7 @@ import {
   TextInputStyle,
 } from "discord.js"; // Import the discord.js library.
 import userData from "../../models/userDatabaseSchema"; // Import the user database schema.
+import log from "../../utils/log";
 
 export default async (bot: Client, buttonInteraction: ButtonInteraction) => {
   if (!buttonInteraction.isButton()) return;
@@ -205,6 +206,11 @@ export default async (bot: Client, buttonInteraction: ButtonInteraction) => {
         await buttonInteraction.showModal(editEnvironmentItemsModal);
       } catch (error) {
         console.error(error);
+        log({
+          header: "Error",
+          payload: `${error}`,
+          type: "error",
+        });
       }
       break;
 
@@ -244,6 +250,11 @@ export default async (bot: Client, buttonInteraction: ButtonInteraction) => {
         await buttonInteraction.showModal(editEnvironmentUsersModal);
       } catch (error) {
         console.log(error);
+        log({
+          header: "Error",
+          payload: `${error}`,
+          type: "error",
+        });
       }
       break;
 
@@ -272,6 +283,11 @@ export default async (bot: Client, buttonInteraction: ButtonInteraction) => {
         await buttonInteraction.showModal(editEnvironmentChannelsModal);
       } catch (error) {
         console.log(error);
+        log({
+          header: "Error",
+          payload: `${error}`,
+          type: "error",
+        });
       }
       break;
   }

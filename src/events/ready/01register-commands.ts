@@ -3,6 +3,7 @@ import { Client } from "discord.js";
 import areCommandsDifferent from "../../utils/areCommandsDifferent";
 import getApplicationCommands from "../../utils/getApplicationCommands";
 import getLocalCommands from "../../utils/getLocalCommands";
+import log from "../../utils/log";
 
 export default async (bot: Client) => {
   try {
@@ -64,5 +65,10 @@ export default async (bot: Client) => {
     }
   } catch (error) {
     console.log(`There was an error: ${error}`); // Log the error
+    log({
+      header: "Error registering commands",
+      payload: `${error}`,
+      type: "error",
+    });
   }
 };

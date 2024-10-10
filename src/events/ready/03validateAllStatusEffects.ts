@@ -1,4 +1,4 @@
-import { Client, User } from "discord.js";
+import { Client } from "discord.js";
 import StatusEffectData from "../../models/statusEffectDatabaseSchema";
 import UserData from "../../models/userDatabaseSchema";
 

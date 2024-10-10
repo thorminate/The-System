@@ -5,6 +5,7 @@ import {
   Client,
   TextChannel,
 } from "discord.js";
+import log from "../../utils/log";
 
 export default async (bot: Client) => {
   try {
@@ -37,5 +38,10 @@ export default async (bot: Client) => {
     });
   } catch (err) {
     console.log(err);
+    log({
+      header: "Onboarding Error",
+      payload: `${err}`,
+      type: "error",
+    });
   }
 };

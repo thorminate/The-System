@@ -14,13 +14,12 @@ import {
 import buttonWrapper from "../../utils/buttonWrapper";
 import userData from "../../models/userDatabaseSchema";
 import itemData from "../../models/itemDatabaseSchema";
-import statusEffectData from "../../models/statusEffectDatabaseSchema";
 import environmentData from "../../models/environmentDatabaseSchema";
 import ms from "ms";
 import { Document } from "mongoose";
 import actions from "../../actions/actionIndex";
-import path, { parse } from "path";
-import makeLogs from "../../utils/makeLogs";
+import path from "path";
+import log from "../../utils/log";
 
 export default async (
   bot: Client,
@@ -738,9 +737,7 @@ export default async (
           "No reason provided";
 
         // get the target user object
-        const kickUser = await modalInteraction.guild.members
-          .fetch(kickUserId)
-          ?.catch(() => null);
+        const kickUser = await modalInteraction.guild.members.fetch(kickUserId);
 
         // check if the target user exists, else edit the reply and return
         if (!kickUser) {
@@ -804,6 +801,11 @@ export default async (
           });
         } catch (error) {
           console.error("Error kicking user: ", error);
+          log({
+            header: "Error kicking user",
+            payload: `${kickUser.user.id} - ${kickUser.user.tag}\n${error}`,
+            type: "error",
+          });
         }
 
         break;
@@ -823,9 +825,9 @@ export default async (
           ) || "No reason provided";
 
         // get the target user object
-        const timeoutUser = await modalInteraction.guild.members
-          .fetch(timeoutUserId)
-          ?.catch(() => null);
+        const timeoutUser = await modalInteraction.guild.members.fetch(
+          timeoutUserId
+        );
 
         // check if the target user exists, else edit the reply and return
         if (!timeoutUser) {
@@ -909,13 +911,18 @@ export default async (
 
         // timeout the user
         try {
-          await timeoutUser.timeout(timeoutUserDuration, timeoutUserReason);
+          await timeoutUser.timeout(timeoutUserDurationMs, timeoutUserReason);
           await modalInteraction.reply({
             content: `The user <@${timeoutUser.user.id}> has been timed out successfully.\n${timeoutUserReason}`,
             ephemeral: true,
           });
         } catch (error) {
           console.error("Error timing out user: ", error);
+          log({
+            header: "Error timing out user",
+            payload: `${timeoutUser.user.id} - ${timeoutUser.user.tag}\n${error}`,
+            type: "error",
+          });
         }
 
         break;
@@ -926,10 +933,11 @@ export default async (
           ephemeral: true,
         });
 
-        makeLogs(
-          path.join(__dirname, "..", "..", "..", "logs", `${Date.now()}.log`),
-          `Modal not found`
-        );
+        log({
+          folder: path.join(__dirname, "..", "..", "..", "logs"),
+          header: "Modal not found",
+          payload: `${modalInteraction.customId} - ${modalInteraction.user.id} - ${modalInteraction.user.tag}`,
+        });
         break;
     }
   } catch (error) {
@@ -941,11 +949,17 @@ export default async (
           "Something went wrong, the modal could not be processed correctly.",
         ephemeral: true,
       })
-      .catch(console.error);
-    makeLogs(
-      path.join(__dirname, "..", "..", "..", "logs", `${Date.now()}.log`),
-      `Error processing a modal`,
-      error
-    );
+      .catch((err) =>
+        log({
+          header: "Response error",
+          payload: `${err}`,
+          type: "error",
+        })
+      );
+    log({
+      header: "Error processing a modal",
+      payload: `${modalInteraction.customId} - ${modalInteraction.user.id} - ${modalInteraction.user.tag}\n${error}`,
+      type: "error",
+    });
   }
 };

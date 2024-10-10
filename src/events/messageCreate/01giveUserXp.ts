@@ -3,6 +3,7 @@ import { Client, Message } from "discord.js";
 import userData from "../../models/userDatabaseSchema";
 import calculateLevelExp from "../../utils/calculateLevelExp";
 import actions from "../../actions/actionIndex";
+import log from "../../utils/log";
 const cooldowns = new Set();
 
 // gets random number based on set parameters min and max
@@ -82,5 +83,10 @@ export default async (bot: Client, message: Message) => {
     }
   } catch (error) {
     console.log(`Error giving Exp: ${error}`);
+    log({
+      header: "Error giving Exp",
+      payload: `${error}`,
+      type: "error",
+    });
   }
 };

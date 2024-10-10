@@ -1,4 +1,6 @@
 import { Document } from "mongodb";
+import log from "../../utils/log";
+import { nodeModuleNameResolver } from "typescript";
 
 function getRandomMultiplier(min: number, max: number) {
   min = Math.ceil(min);
@@ -16,28 +18,36 @@ export default async (
   user: Document,
   levelAmount: number = 1
 ): Promise<Document> => {
-  if (levelAmount < 1) {
+  try {
+    if (levelAmount < 1) {
+      return user;
+    }
+    const strengthMultiplied =
+      getRandomMultiplier(1, 5) * user.strengthMultiplier;
+    const willMultiplied = getRandomMultiplier(1, 5) * user.willMultiplier;
+    const cognitionMultiplied =
+      getRandomMultiplier(1, 5) * user.cognitionMultiplier;
+
+    for (let i = 0; i < levelAmount; i++) {
+      user.exp = 0;
+      user.level++;
+      user.strength += strengthMultiplied;
+      user.will += willMultiplied;
+      user.cognition += cognitionMultiplied;
+    }
+
+    // then round the values
+    user.strength = Math.round(user.strength);
+    user.will = Math.round(user.will);
+    user.cognition = Math.round(user.cognition);
+
+    await user.save();
     return user;
+  } catch (error) {
+    log({
+      header: "Level Up Error",
+      payload: `${error}`,
+      type: "error",
+    });
   }
-  const strengthMultiplied =
-    getRandomMultiplier(1, 5) * user.strengthMultiplier;
-  const willMultiplied = getRandomMultiplier(1, 5) * user.willMultiplier;
-  const cognitionMultiplied =
-    getRandomMultiplier(1, 5) * user.cognitionMultiplier;
-
-  for (let i = 0; i < levelAmount; i++) {
-    user.exp = 0;
-    user.level++;
-    user.strength += strengthMultiplied;
-    user.will += willMultiplied;
-    user.cognition += cognitionMultiplied;
-  }
-
-  // then round the values
-  user.strength = Math.round(user.strength);
-  user.will = Math.round(user.will);
-  user.cognition = Math.round(user.cognition);
-
-  await user.save().catch(console.error);
-  return user;
 };

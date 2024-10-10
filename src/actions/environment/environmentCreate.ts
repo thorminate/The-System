@@ -1,6 +1,7 @@
 import { ModalSubmitInteraction } from "discord.js";
 import ItemData from "../../models/itemDatabaseSchema";
 import EnvironmentData from "../../models/environmentDatabaseSchema";
+import log from "../../utils/log";
 
 interface Options {
   name: string;
@@ -106,5 +107,12 @@ export default async (
         ephemeral: true,
       });
     }
-  } catch (err) {}
+  } catch (err) {
+    console.log(err);
+    log({
+      header: "Environment Create Error",
+      payload: `${err}`,
+      type: "error",
+    });
+  }
 };

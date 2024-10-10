@@ -4,9 +4,10 @@
  * @param {Client} bot
  * @param {string} token
  */
-import { Client, IntentsBitField } from "discord.js"; // Get the discord.js library.
+import { Client, DiscordAPIError, IntentsBitField } from "discord.js"; // Get the discord.js library.
 import mongoose from "mongoose"; // Get the mongoose library.
 import eventHandler from "./handlers/eventHandler"; // Get the event handler.
+import log from "./utils/log";
 
 // Define 'bot'
 const bot = new Client({
@@ -43,7 +44,6 @@ const DiscordToken = process.env.TOKEN; // Get the Discord token.
 (async () => {
   // Connect to MongoDB and Discord asynchronously.
   try {
-    // Try
     process.stdout.write("Attempting to connect to DB..."); // Log that we are attempting to connect to the DB.
     await mongoose.connect(MongoDBToken).then(() => {
       //Change the text to say "Attempting to connect to DB... Connected"
@@ -59,7 +59,11 @@ const DiscordToken = process.env.TOKEN; // Get the Discord token.
       .login(DiscordToken)
       .then(() => process.stdout.write(" Connected\n")); // Connect to Discord. When the connection is successful, log that it was successful.
   } catch (error) {
-    // Catch
     console.log(`Index Error: ${error}`); // Log the error.
+    log({
+      header: "Index Error",
+      payload: `${error}`,
+      type: "error",
+    });
   }
 })();

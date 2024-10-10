@@ -5,6 +5,7 @@
  */
 import getLocalCommands from "../../utils/getLocalCommands";
 import { Client, CommandInteraction, PermissionsBitField } from "discord.js";
+import log from "../../utils/log";
 
 export default async (bot: Client, commandInteraction: CommandInteraction) => {
   if (!commandInteraction.isChatInputCommand()) return;
@@ -77,5 +78,10 @@ export default async (bot: Client, commandInteraction: CommandInteraction) => {
     await commandObject.callback(commandInteraction.client, commandInteraction);
   } catch (error) {
     console.log(`There was an error running this command: ${error}`);
+    log({
+      header: "Command Error",
+      payload: `${error}`,
+      type: "error",
+    });
   }
 };
